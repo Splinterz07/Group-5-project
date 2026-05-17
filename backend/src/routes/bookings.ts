@@ -1,12 +1,10 @@
 import { Router, Request, Response } from 'express';
 import { body } from 'express-validator';
-import { bookings, Booking } from '../models/booking';
-import { events } from '../models/event';
 import validate from '../middleware/validate';
+import prisma from '../lib/prisma';
 
 const router = Router();
 
-// Validation rules
 const bookingValidation = [
   body('eventId').notEmpty().withMessage('Event ID is required'),
   body('name').notEmpty().withMessage('Name is required'),
@@ -15,15 +13,19 @@ const bookingValidation = [
 ];
 
 // GET all bookings
-router.get('/', (req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
+  const bookings = await prisma.booking.findMany();
   res.json(bookings);
 });
 
 // POST create a new booking
-router.post('/', bookingValidation, validate, (req: Request, res: Response) => {
+router.post('/', bookingValidation, validate, async (req: Request, res: Response) => {
   const { eventId, name, email, seats } = req.body;
 
-  const event = events.find(e => e.id === eventId);
+  const event = await prisma.event.findUnique({
+    where: { id: Number(eventId) }
+  });
+
   if (!event) {
     res.status(404).json({ message: 'Event not found' });
     return;
@@ -34,36 +36,39 @@ router.post('/', bookingValidation, validate, (req: Request, res: Response) => {
     return;
   }
 
-  const newBooking: Booking = {
-    id: String(bookings.length + 1),
-    eventId,
-    name,
-    email,
-    seats,
-    createdAt: new Date().toISOString()
-  };
+  const booking = await prisma.booking.create({
+    data: { eventId: Number(eventId), name, email, seats: Number(seats) }
 
-  event.availableSeats -= seats;
-  bookings.push(newBooking);
+  });
 
-  res.status(201).json(newBooking);
+  await prisma.event.update({
+    where: { id: Number(eventId) },
+    data: { availableSeats: event.availableSeats - seats }
+  });
+
+  res.status(201).json(booking);
 });
 
 // DELETE cancel a booking
-router.delete('/:id', (req: Request, res: Response) => {
-  const index = bookings.findIndex(b => b.id === req.params.id);
-  if (index === -1) {
+router.delete('/:id', async (req: Request, res: Response) => {
+  const booking = await prisma.booking.findUnique({
+    where: { id: Number(req.params.id) }
+  });
+
+  if (!booking) {
     res.status(404).json({ message: 'Booking not found' });
     return;
   }
 
-  const booking = bookings[index];
-  const event = events.find(e => e.id === booking.eventId);
-  if (event) {
-    event.availableSeats += booking.seats;
-  }
+  await prisma.event.update({
+    where: { id: booking.eventId },
+    data: { availableSeats: { increment: booking.seats } }
+  });
 
-  bookings.splice(index, 1);
+  await prisma.booking.delete({
+    where: { id: Number(req.params.id) }
+  });
+
   res.json({ message: 'Booking cancelled successfully' });
 });
 
