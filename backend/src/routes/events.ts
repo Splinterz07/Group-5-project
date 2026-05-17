@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
-import { events } from '../models/event';
 import { body } from 'express-validator';
 import validate from '../middleware/validate';
+import prisma from '../lib/prisma';
 
 const router = Router();
 
@@ -14,13 +14,16 @@ const eventValidation = [
 ];
 
 // GET all events
-router.get('/', (req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
+  const events = await prisma.event.findMany();
   res.json(events);
 });
 
 // GET single event by id
-router.get('/:id', (req: Request, res: Response) => {
-  const event = events.find(e => e.id === req.params.id);
+router.get('/:id', async (req: Request, res: Response) => {
+  const event = await prisma.event.findUnique({
+    where: { id: Number(req.params.id) }
+  });
   if (!event) {
     res.status(404).json({ message: 'Event not found' });
     return;
@@ -28,24 +31,38 @@ router.get('/:id', (req: Request, res: Response) => {
   res.json(event);
 });
 
+// POST create a new event
+router.post('/', async (req: Request, res: Response) => {
+  const { title, description, date, location, totalSeats, price } = req.body;
+
+  const event = await prisma.event.create({
+    data: {
+      title,
+      description,
+      date,
+      location,
+      totalSeats,
+      availableSeats: totalSeats,
+      price
+    }
+  });
+
+  res.status(201).json(event);
+});
+
 // PUT update an event
-router.put('/:id', eventValidation, validate, (req: Request, res: Response) => {
-  const event = events.find(e => e.id === req.params.id);
+router.put('/:id', eventValidation, validate, async (req: Request, res: Response) => {
+  const { title, description, date, location, totalSeats, availableSeats, price } = req.body;
+
+  const event = await prisma.event.update({
+    where: { id: Number(req.params.id) },
+    data: { title, description, date, location, totalSeats, availableSeats, price }
+  });
+
   if (!event) {
     res.status(404).json({ message: 'Event not found' });
     return;
   }
-
-  const { title, description, date, location, totalSeats, availableSeats, price } = req.body;
-
-  if (title) event.title = title;
-  if (description) event.description = description;
-  if (date) event.date = date;
-  if (location) event.location = location;
-  if (totalSeats) event.totalSeats = totalSeats;
-  if (availableSeats) event.availableSeats = availableSeats;
-  if (price) event.price = price;
-
   res.json(event);
 });
 
