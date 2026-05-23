@@ -14,8 +14,8 @@ A full-stack event booking application built with Node.js, TypeScript, and React
 
 ## Tech Stack
 - **Backend:** Node.js, Express, TypeScript
-- **Frontend:** React (in progress)
-- **Database:** TBD
+- **Frontend:** Next.js (in progress)
+- **Database:** PostgreSQL with Prisma ORM
 
 ## Getting Started
 
@@ -40,4 +40,4 @@ bookify/
 │       ├── models/
 │       └── middleware/
 └── frontend/ (coming soon)
->>>>>>> 5d7c1aab115702b7286c083a7ec46c8b4112d61b
+
