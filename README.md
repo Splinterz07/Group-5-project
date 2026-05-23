@@ -37,9 +37,21 @@ npm run dev
 ## Project Structure
 bookify/
 ├── backend/
+│   ├── prisma/
 │   └── src/
 │       ├── routes/
 │       ├── models/
+│       ├── controllers/
+│       ├── lib/
 │       └── middleware/
-└── frontend/ (coming soon)
+├── frontend/
+│   └── app/
+│       ├── home/
+│       ├── login/
+│       ├── signup/
+│       └── profile/
+├── docs/
+├── .gitignore
+├── LICENSE
+└── README.md
 
