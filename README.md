@@ -14,8 +14,8 @@ A full-stack event booking application built with Node.js, TypeScript, and React
 
 ## Tech Stack
 - **Backend:** Node.js, Express, TypeScript
-- **Frontend:** React (in progress)
-- **Database:** TBD
+- **Frontend:** Next.js (in progress)
+- **Database:** PostgreSQL with Prisma ORM
 
 ## Getting Started
 
@@ -29,15 +29,29 @@ npm run dev
 |--------|----------|-------------|
 | GET | /api/events | Get all events |
 | GET | /api/events/:id | Get single event |
+| PUT | /api/events/:id | Update an event |
 | GET | /api/bookings | Get all bookings |
 | POST | /api/bookings | Create a booking |
+| DELETE | /api/bookings/:id | Cancel a booking |
 
 ## Project Structure
 bookify/
 ├── backend/
+│   ├── prisma/
 │   └── src/
 │       ├── routes/
 │       ├── models/
+│       ├── controllers/
+│       ├── lib/
 │       └── middleware/
-└── frontend/ (coming soon)
->>>>>>> 5d7c1aab115702b7286c083a7ec46c8b4112d61b
+├── frontend/
+│   └── app/
+│       ├── home/
+│       ├── login/
+│       ├── signup/
+│       └── profile/
+├── docs/
+├── .gitignore
+├── LICENSE
+└── README.md
+
