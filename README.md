@@ -29,8 +29,10 @@ npm run dev
 |--------|----------|-------------|
 | GET | /api/events | Get all events |
 | GET | /api/events/:id | Get single event |
+| PUT | /api/events/:id | Update an event |
 | GET | /api/bookings | Get all bookings |
 | POST | /api/bookings | Create a booking |
+| DELETE | /api/bookings/:id | Cancel a booking |
 
 ## Project Structure
 bookify/
