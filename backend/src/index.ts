@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import eventRoutes from './routes/events';
 import bookingRoutes from './routes/bookings';
+import authRoutes from './routes/auth';
 
 dotenv.config();
 
@@ -16,6 +17,7 @@ app.use(express.json());
 // Routes
 app.use('/api/events', eventRoutes);
 app.use('/api/bookings', bookingRoutes);
+app.use('/api/auth', authRoutes);
 
 // Health check
 app.get('/', (req, res) => {
