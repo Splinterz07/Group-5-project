@@ -1,8 +1,12 @@
 {
   "name": "bookify-backend",
   "version": "1.0.0",
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "description": "Event Booking System API",
   "main": "dist/index.js",
+  
   "scripts": {
     "dev": "ts-node-dev src/index.ts",
     "build": "tsc",
