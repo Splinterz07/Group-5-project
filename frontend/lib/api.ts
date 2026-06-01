@@ -11,9 +11,21 @@ export const setToken = (token: string) => {
 
 export const removeToken = () => {
   localStorage.removeItem('token');
+  localStorage.removeItem('userName');
+  localStorage.removeItem('userEmail');
 };
 
 export const isLoggedIn = () => !!getToken();
+
+export const getUserName = () => {
+  if (typeof window === 'undefined') return '';
+  return localStorage.getItem('userName') || '';
+};
+
+export const getUserEmail = () => {
+  if (typeof window === 'undefined') return '';
+  return localStorage.getItem('userEmail') || '';
+};
 
 export const authFetch = async (path: string, options: RequestInit = {}) => {
   const token = getToken();
@@ -36,6 +48,8 @@ export const login = async (email: string, password: string) => {
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || 'Login failed');
   setToken(data.token);
+  localStorage.setItem('userName', data.name);
+  localStorage.setItem('userEmail', email);
   return data;
 };
 

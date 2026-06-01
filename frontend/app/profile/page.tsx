@@ -1,9 +1,8 @@
 "use client";
 import Link from "next/link";
-import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { fetchBookings, cancelBooking, isLoggedIn, removeToken } from "../../lib/api";
+import { fetchBookings, cancelBooking, isLoggedIn, removeToken, getUserName, getUserEmail } from "../../lib/api";
 
 const TABS = ["Account Details", "My Bookings", "Payments"] as const;
 type Tab = (typeof TABS)[number];
@@ -17,6 +16,13 @@ interface Booking {
   createdAt: string;
 }
 
+interface CardForm {
+  cardNumber: string;
+  expiry: string;
+  cvv: string;
+  cardName: string;
+}
+
 export default function ProfilePage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>("Account Details");
@@ -24,10 +30,28 @@ export default function ProfilePage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [bookingsLoading, setBookingsLoading] = useState(false);
   const [bookingsError, setBookingsError] = useState("");
+  const [showAddCard, setShowAddCard] = useState(false);
+  const [savedCards, setSavedCards] = useState([
+    { id: 1, label: "Visa ending in 4242", color: "bg-blue-500" },
+    { id: 2, label: "Mastercard ending in 8888", color: "bg-red-500" },
+  ]);
+  const [cardForm, setCardForm] = useState<CardForm>({
+    cardNumber: "",
+    expiry: "",
+    cvv: "",
+    cardName: "",
+  });
+
+  const userName = getUserName();
+  const userEmail = getUserEmail();
+  const initials = userName
+    ? userName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
+    : "??";
+
   const [form, setForm] = useState({
-    fullName: "Philemon Michael-Hussaini",
-    email: "philemon@example.com",
-    phone: "+234 800 000 0000",
+    fullName: userName,
+    email: userEmail,
+    phone: "",
     password: "",
   });
 
@@ -73,6 +97,39 @@ export default function ProfilePage() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const handleCardFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value;
+    if (e.target.name === "cardNumber") {
+      value = value.replace(/\D/g, "").slice(0, 16).replace(/(.{4})/g, "$1 ").trim();
+    }
+    if (e.target.name === "expiry") {
+      value = value.replace(/\D/g, "").slice(0, 4);
+      if (value.length >= 2) value = value.slice(0, 2) + "/" + value.slice(2);
+    }
+    if (e.target.name === "cvv") {
+      value = value.replace(/\D/g, "").slice(0, 3);
+    }
+    setCardForm({ ...cardForm, [e.target.name]: value });
+  };
+
+  const handleAddCard = (e: React.FormEvent) => {
+    e.preventDefault();
+    const last4 = cardForm.cardNumber.replace(/\s/g, "").slice(-4);
+    const colors = ["bg-blue-500", "bg-red-500", "bg-purple-600", "bg-green-600"];
+    const color = colors[savedCards.length % colors.length];
+    setSavedCards([...savedCards, {
+      id: savedCards.length + 1,
+      label: `Card ending in ${last4}`,
+      color,
+    }]);
+    setCardForm({ cardNumber: "", expiry: "", cvv: "", cardName: "" });
+    setShowAddCard(false);
+  };
+
+  const handleRemoveCard = (id: number) => {
+    setSavedCards(savedCards.filter((c) => c.id !== id));
+  };
+
   return (
     <div className="min-h-screen relative flex flex-col">
       <div
@@ -109,17 +166,11 @@ export default function ProfilePage() {
 
           {/* Avatar + Name */}
           <div className="flex flex-col items-center pt-10 pb-6">
-            <div className="w-24 h-24 rounded-full border-4 border-purple-400 overflow-hidden mb-3 shadow-lg">
-              <Image
-                src="/bookify icon.jpg"
-                alt="Profile"
-                width={96}
-                height={96}
-                className="object-cover w-full h-full"
-              />
+            <div className="w-24 h-24 rounded-full border-4 border-purple-400 bg-purple-700 flex items-center justify-center mb-3 shadow-lg">
+              <span className="text-white text-3xl font-bold">{initials}</span>
             </div>
-            <h2 className="text-white text-xl font-bold">{form.fullName}</h2>
-            <p className="text-purple-200 text-sm mt-1">Gen Z Ambassador</p>
+            <h2 className="text-white text-xl font-bold">{userName || "User"}</h2>
+            <p className="text-purple-200 text-sm mt-1">{userEmail}</p>
           </div>
 
           {/* Tabs */}
@@ -232,9 +283,7 @@ export default function ProfilePage() {
             {activeTab === "My Bookings" && (
               <div>
                 {bookingsLoading && <p className="text-white/70 text-sm">Loading bookings...</p>}
-                {bookingsError && (
-                  <p className="text-red-300 text-sm">{bookingsError}</p>
-                )}
+                {bookingsError && <p className="text-red-300 text-sm">{bookingsError}</p>}
                 {!bookingsLoading && !bookingsError && bookings.length === 0 && (
                   <div className="text-center py-8">
                     <p className="text-white/60 text-sm">No bookings yet.</p>
@@ -245,12 +294,16 @@ export default function ProfilePage() {
                 )}
                 <div className="space-y-4">
                   {bookings.map((booking) => (
-                    <div key={booking.id} className="flex items-center gap-4 bg-white/10 rounded-xl overflow-hidden border border-white/15 px-4 py-3">
+                    <div key={booking.id} className="flex items-center gap-4 bg-white/10 rounded-xl border border-white/15 px-4 py-3">
+                      <div className="w-10 h-10 rounded-full bg-purple-700 flex items-center justify-center flex-shrink-0">
+                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/>
+                        </svg>
+                      </div>
                       <div className="flex-1">
                         <p className="text-white text-sm font-semibold">Booking #{booking.id}</p>
-                        <p className="text-white/60 text-xs mt-1">Event ID: {booking.eventId}</p>
-                        <p className="text-white/60 text-xs">{booking.seats} seat(s) • {booking.email}</p>
-                        <p className="text-white/40 text-xs mt-1">{new Date(booking.createdAt).toLocaleDateString()}</p>
+                        <p className="text-white/60 text-xs mt-0.5">Event ID: {booking.eventId} • {booking.seats} seat(s)</p>
+                        <p className="text-white/40 text-xs">{new Date(booking.createdAt).toLocaleDateString()}</p>
                       </div>
                       <button
                         onClick={() => handleCancelBooking(booking.id)}
@@ -266,25 +319,96 @@ export default function ProfilePage() {
 
             {/* Payments */}
             {activeTab === "Payments" && (
-              <div className="space-y-4 max-w-sm mx-auto">
-                {[
-                  { label: "Saved Card 1", color: "bg-blue-500" },
-                  { label: "Saved Card 2", color: "bg-red-500" },
-                  { label: "Saved Card 3", color: "bg-blue-700" },
-                ].map((card) => (
-                  <div key={card.label} className="flex items-center gap-4 bg-white/10 border border-white/20 rounded-xl px-5 py-4">
-                    <div className={`w-10 h-7 rounded ${card.color} flex items-center justify-center`}>
-                      <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <div className="max-w-sm mx-auto space-y-4">
+                {savedCards.map((card) => (
+                  <div key={card.id} className="flex items-center gap-4 bg-white/10 border border-white/20 rounded-xl px-5 py-4">
+                    <div className={`w-12 h-8 rounded-md ${card.color} flex items-center justify-center flex-shrink-0`}>
+                      <svg className="w-6 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <rect x="2" y="5" width="20" height="14" rx="2" fill="none" stroke="white" strokeWidth="1.5"/>
                         <line x1="2" y1="10" x2="22" y2="10" stroke="white" strokeWidth="1.5"/>
                       </svg>
                     </div>
                     <span className="flex-1 text-white text-sm font-medium">{card.label}</span>
-                    <button className="px-4 py-1.5 border border-white/40 text-white text-xs rounded-lg hover:bg-white/10 transition-all">
-                      Manage
+                    <button
+                      onClick={() => handleRemoveCard(card.id)}
+                      className="px-3 py-1.5 border border-red-400/50 text-red-300 text-xs rounded-lg hover:bg-red-400/20 transition-all"
+                    >
+                      Remove
                     </button>
                   </div>
                 ))}
+
+                {!showAddCard && (
+                  <button
+                    onClick={() => setShowAddCard(true)}
+                    className="w-full py-3 border-2 border-dashed border-white/30 text-white/60 hover:border-purple-400 hover:text-purple-300 rounded-xl text-sm font-semibold transition-all"
+                  >
+                    + Add New Card
+                  </button>
+                )}
+
+                {showAddCard && (
+                  <form onSubmit={handleAddCard} className="bg-white/10 border border-white/20 rounded-xl p-5 space-y-3">
+                    <h3 className="text-white text-sm font-bold mb-2">Add New Card</h3>
+
+                    <input
+                      type="text"
+                      name="cardName"
+                      placeholder="Name on Card"
+                      value={cardForm.cardName}
+                      onChange={handleCardFormChange}
+                      required
+                      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white text-sm outline-none placeholder-white/40 focus:border-purple-400"
+                    />
+
+                    <input
+                      type="text"
+                      name="cardNumber"
+                      placeholder="Card Number"
+                      value={cardForm.cardNumber}
+                      onChange={handleCardFormChange}
+                      required
+                      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white text-sm outline-none placeholder-white/40 focus:border-purple-400"
+                    />
+
+                    <div className="flex gap-3">
+                      <input
+                        type="text"
+                        name="expiry"
+                        placeholder="MM/YY"
+                        value={cardForm.expiry}
+                        onChange={handleCardFormChange}
+                        required
+                        className="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white text-sm outline-none placeholder-white/40 focus:border-purple-400"
+                      />
+                      <input
+                        type="text"
+                        name="cvv"
+                        placeholder="CVV"
+                        value={cardForm.cvv}
+                        onChange={handleCardFormChange}
+                        required
+                        className="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white text-sm outline-none placeholder-white/40 focus:border-purple-400"
+                      />
+                    </div>
+
+                    <div className="flex gap-3 pt-1">
+                      <button
+                        type="submit"
+                        className="flex-1 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold rounded-lg transition-all"
+                      >
+                        Save Card
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowAddCard(false)}
+                        className="flex-1 py-2.5 border border-white/30 text-white/70 text-sm rounded-lg hover:bg-white/10 transition-all"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                )}
               </div>
             )}
           </div>
