@@ -101,7 +101,7 @@ export default function LandingPage() {
           <h3 className="text-xl font-bold text-gray-900">Planning an event?</h3>
           <p className="text-xl font-bold text-gray-900">Selling tickets has never been easier!</p>
           <Link href="/organizer/create" className="mt-6 inline-block px-8 py-3 border-2 border-gray-400 text-gray-700 text-sm rounded-full hover:bg-purple-600 hover:border-purple-600 hover:text-white transition-all font-medium">
-            create an event
+            Create an event
           </Link>
         </div>
       </section>
