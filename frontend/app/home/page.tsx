@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { fetchEvents } from "../../lib/api";
 
 const featuredEvents = [
   {
@@ -18,35 +19,35 @@ const featuredEvents = [
   { id: 4, image: "/home image5.jpg", title: "Sports Event", subtitle: "", date: "", location: "", tag: "" },
 ];
 
-const events = [
-  {
-    id: 1,
-    title: "Code Spark 2026",
-    description: "Get what it takes! Discover your path to becoming one of the next luminaries of the tech industry.",
-    date: "25TH APRIL 2026",
-    location: "SST FOYER",
-    image: "/image 1.jpg",
-  },
-  {
-    id: 2,
-    title: "Fatherland The Musical",
-    description: "Experience the magic in tale of the people of Nikatia.",
-    date: "5TH MAY 2026",
-    location: "ABUJA CLASSROOM, TYO",
-    image: "/image 2.jpg",
-  },
-  {
-    id: 3,
-    title: "Squad Hackathon 3.0",
-    description: "Stand a chance to win ₦10,000,000 at Hackathon 3.0 by Squad.",
-    date: "30TH MAY 2026",
-    location: "THE LANDMARK CENTER, IK",
-    image: "/image 3.jpg",
-  },
-];
+interface Event {
+  id: number;
+  title: string;
+  description: string;
+  date: string;
+  location: string;
+  totalSeats: number;
+  availableSeats: number;
+  price: number;
+}
 
 export default function HomePage() {
   const [email, setEmail] = useState("");
+  const [events, setEvents] = useState<Event[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadEvents = async () => {
+      try {
+        const data = await fetchEvents();
+        setEvents(data);
+      } catch (err) {
+        console.error("Failed to load events", err);
+      } finally {
+        setEventsLoading(false);
+      }
+    };
+    loadEvents();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-950 text-white font-sans">
@@ -84,7 +85,6 @@ export default function HomePage() {
       {/* ── FEATURED BANNER ── */}
       <section className="px-8 py-4 bg-gray-900">
         <div className="grid grid-cols-4 gap-2 h-48">
-          {/* First image large with overlay text */}
           <div className="relative col-span-1 rounded-lg overflow-hidden bg-gray-800">
             <Image src="/home image2.jpg" alt="She Creates" fill className="object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
@@ -112,14 +112,21 @@ export default function HomePage() {
       <section className="px-8 py-8 bg-gray-900 mt-2">
         <h2 className="text-base font-semibold text-white mb-5">Events for you</h2>
         <div className="flex flex-col gap-4">
+          {eventsLoading && <p className="text-gray-400 text-sm">Loading events...</p>}
+          {!eventsLoading && events.length === 0 && (
+            <p className="text-gray-400 text-sm">No events available at the moment.</p>
+          )}
           {events.map((event) => (
             <div key={event.id} className="flex items-center gap-4 bg-gray-800 rounded-xl overflow-hidden border border-gray-700 hover:border-purple-500 transition-all">
-              <div className="w-36 h-24 flex-shrink-0 relative">
-                <Image src={event.image} alt={event.title} fill className="object-cover" />
+              <div className="w-36 h-24 flex-shrink-0 bg-purple-900/40 flex items-center justify-center">
+                <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
               </div>
               <div className="flex-1 py-3 pr-2">
                 <p className="text-white text-sm font-semibold">{event.title}</p>
                 <p className="text-gray-400 text-xs mt-1 line-clamp-2 leading-relaxed">{event.description}</p>
+                <p className="text-purple-400 text-xs mt-1 font-semibold">₦{event.price.toLocaleString()}</p>
               </div>
               <div className="flex flex-col items-end gap-2 pr-4 py-3 flex-shrink-0">
                 <p className="text-gray-400 text-xs">• {event.date}</p>
