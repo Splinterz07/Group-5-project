@@ -16,12 +16,50 @@ interface Booking {
   createdAt: string;
 }
 
+interface SavedCard {
+  id: number;
+  label: string;
+  type: "visa" | "mastercard" | "other";
+}
+
 interface CardForm {
   cardNumber: string;
   expiry: string;
   cvv: string;
   cardName: string;
 }
+
+const VisaIcon = () => (
+  <svg viewBox="0 0 48 48" className="w-10 h-7" fill="none">
+    <rect width="48" height="48" rx="6" fill="#1A1F71"/>
+    <text x="50%" y="67%" dominantBaseline="middle" textAnchor="middle" fill="white" fontSize="18" fontWeight="bold" fontFamily="Arial">VISA</text>
+  </svg>
+);
+
+const MastercardIcon = () => (
+  <svg viewBox="0 0 48 48" className="w-10 h-7" fill="none">
+    <rect width="48" height="48" rx="6" fill="#252525"/>
+    <circle cx="19" cy="24" r="10" fill="#EB001B"/>
+    <circle cx="29" cy="24" r="10" fill="#F79E1B"/>
+    <path d="M24 16.8A10 10 0 0129 24a10 10 0 01-5 7.2A10 10 0 0119 24a10 10 0 015-7.2z" fill="#FF5F00"/>
+  </svg>
+);
+
+const GenericCardIcon = ({ color }: { color: string }) => (
+  <div className={`w-10 h-7 rounded ${color} flex items-center justify-center`}>
+    <svg className="w-6 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <rect x="2" y="5" width="20" height="14" rx="2" fill="none" stroke="white" strokeWidth="1.5"/>
+      <line x1="2" y1="10" x2="22" y2="10" stroke="white" strokeWidth="1.5"/>
+    </svg>
+  </div>
+);
+
+const detectCardType = (number: string): "visa" | "mastercard" | "other" => {
+  const clean = number.replace(/\s/g, "");
+  if (clean.startsWith("4")) return "visa";
+  if (clean.startsWith("5") || clean.startsWith("2")) return "mastercard";
+  return "other";
+};
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -31,9 +69,9 @@ export default function ProfilePage() {
   const [bookingsLoading, setBookingsLoading] = useState(false);
   const [bookingsError, setBookingsError] = useState("");
   const [showAddCard, setShowAddCard] = useState(false);
-  const [savedCards, setSavedCards] = useState([
-    { id: 1, label: "Visa ending in 4242", color: "bg-blue-500" },
-    { id: 2, label: "Mastercard ending in 8888", color: "bg-red-500" },
+  const [savedCards, setSavedCards] = useState<SavedCard[]>([
+    { id: 1, label: "Visa ending in 4242", type: "visa" },
+    { id: 2, label: "Mastercard ending in 8888", type: "mastercard" },
   ]);
   const [cardForm, setCardForm] = useState<CardForm>({
     cardNumber: "",
@@ -115,12 +153,12 @@ export default function ProfilePage() {
   const handleAddCard = (e: React.FormEvent) => {
     e.preventDefault();
     const last4 = cardForm.cardNumber.replace(/\s/g, "").slice(-4);
-    const colors = ["bg-blue-500", "bg-red-500", "bg-purple-600", "bg-green-600"];
-    const color = colors[savedCards.length % colors.length];
+    const type = detectCardType(cardForm.cardNumber);
+    const typeLabel = type === "visa" ? "Visa" : type === "mastercard" ? "Mastercard" : "Card";
     setSavedCards([...savedCards, {
       id: savedCards.length + 1,
-      label: `Card ending in ${last4}`,
-      color,
+      label: `${typeLabel} ending in ${last4}`,
+      type,
     }]);
     setCardForm({ cardNumber: "", expiry: "", cvv: "", cardName: "" });
     setShowAddCard(false);
@@ -200,56 +238,32 @@ export default function ProfilePage() {
                   <svg className="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                   </svg>
-                  <input
-                    type="text"
-                    name="fullName"
-                    value={form.fullName}
-                    onChange={handleChange}
-                    className="bg-transparent flex-1 text-gray-700 text-sm outline-none placeholder-gray-500"
-                    placeholder="Full Name"
-                  />
+                  <input type="text" name="fullName" value={form.fullName} onChange={handleChange}
+                    className="bg-transparent flex-1 text-gray-700 text-sm outline-none placeholder-gray-500" placeholder="Full Name"/>
                 </div>
 
                 <div className="flex items-center gap-3 bg-white/80 rounded-lg px-4 py-3">
                   <svg className="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                   </svg>
-                  <input
-                    type="email"
-                    name="email"
-                    value={form.email}
-                    onChange={handleChange}
-                    className="bg-transparent flex-1 text-gray-700 text-sm outline-none placeholder-gray-500"
-                    placeholder="Email Address"
-                  />
+                  <input type="email" name="email" value={form.email} onChange={handleChange}
+                    className="bg-transparent flex-1 text-gray-700 text-sm outline-none placeholder-gray-500" placeholder="Email Address"/>
                 </div>
 
                 <div className="flex items-center gap-3 bg-white/80 rounded-lg px-4 py-3">
                   <svg className="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
                   </svg>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={form.phone}
-                    onChange={handleChange}
-                    className="bg-transparent flex-1 text-gray-700 text-sm outline-none placeholder-gray-500"
-                    placeholder="Phone Number"
-                  />
+                  <input type="tel" name="phone" value={form.phone} onChange={handleChange}
+                    className="bg-transparent flex-1 text-gray-700 text-sm outline-none placeholder-gray-500" placeholder="Phone Number"/>
                 </div>
 
                 <div className="flex items-center gap-3 bg-white/80 rounded-lg px-4 py-3">
                   <svg className="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                   </svg>
-                  <input
-                    type="password"
-                    name="password"
-                    value={form.password}
-                    onChange={handleChange}
-                    className="bg-transparent flex-1 text-gray-700 text-sm outline-none placeholder-gray-500"
-                    placeholder="New Password"
-                  />
+                  <input type="password" name="password" value={form.password} onChange={handleChange}
+                    className="bg-transparent flex-1 text-gray-700 text-sm outline-none placeholder-gray-500" placeholder="New Password"/>
                 </div>
 
                 <div className="flex items-center justify-between bg-white/10 rounded-lg px-4 py-3">
@@ -263,13 +277,11 @@ export default function ProfilePage() {
                       cursor: "pointer", padding: 0,
                     }}
                   >
-                    <span
-                      style={{
-                        position: "absolute", top: "3px", left: notifications ? "23px" : "3px",
-                        width: "18px", height: "18px", backgroundColor: "white", borderRadius: "50%",
-                        transition: "left 0.3s", boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
-                      }}
-                    />
+                    <span style={{
+                      position: "absolute", top: "3px", left: notifications ? "23px" : "3px",
+                      width: "18px", height: "18px", backgroundColor: "white", borderRadius: "50%",
+                      transition: "left 0.3s", boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+                    }}/>
                   </button>
                 </div>
 
@@ -322,11 +334,10 @@ export default function ProfilePage() {
               <div className="max-w-sm mx-auto space-y-4">
                 {savedCards.map((card) => (
                   <div key={card.id} className="flex items-center gap-4 bg-white/10 border border-white/20 rounded-xl px-5 py-4">
-                    <div className={`w-12 h-8 rounded-md ${card.color} flex items-center justify-center flex-shrink-0`}>
-                      <svg className="w-6 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <rect x="2" y="5" width="20" height="14" rx="2" fill="none" stroke="white" strokeWidth="1.5"/>
-                        <line x1="2" y1="10" x2="22" y2="10" stroke="white" strokeWidth="1.5"/>
-                      </svg>
+                    <div className="flex-shrink-0">
+                      {card.type === "visa" && <VisaIcon />}
+                      {card.type === "mastercard" && <MastercardIcon />}
+                      {card.type === "other" && <GenericCardIcon color="bg-purple-600" />}
                     </div>
                     <span className="flex-1 text-white text-sm font-medium">{card.label}</span>
                     <button
@@ -371,7 +382,7 @@ export default function ProfilePage() {
                       className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white text-sm outline-none placeholder-white/40 focus:border-purple-400"
                     />
 
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 overflow-hidden">
                       <input
                         type="text"
                         name="expiry"
@@ -379,7 +390,7 @@ export default function ProfilePage() {
                         value={cardForm.expiry}
                         onChange={handleCardFormChange}
                         required
-                        className="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white text-sm outline-none placeholder-white/40 focus:border-purple-400"
+                        className="w-1/2 bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white text-sm outline-none placeholder-white/40 focus:border-purple-400"
                       />
                       <input
                         type="text"
@@ -388,22 +399,15 @@ export default function ProfilePage() {
                         value={cardForm.cvv}
                         onChange={handleCardFormChange}
                         required
-                        className="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white text-sm outline-none placeholder-white/40 focus:border-purple-400"
+                        className="w-1/2 bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white text-sm outline-none placeholder-white/40 focus:border-purple-400"
                       />
                     </div>
 
                     <div className="flex gap-3 pt-1">
-                      <button
-                        type="submit"
-                        className="flex-1 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold rounded-lg transition-all"
-                      >
+                      <button type="submit" className="flex-1 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold rounded-lg transition-all">
                         Save Card
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => setShowAddCard(false)}
-                        className="flex-1 py-2.5 border border-white/30 text-white/70 text-sm rounded-lg hover:bg-white/10 transition-all"
-                      >
+                      <button type="button" onClick={() => setShowAddCard(false)} className="flex-1 py-2.5 border border-white/30 text-white/70 text-sm rounded-lg hover:bg-white/10 transition-all">
                         Cancel
                       </button>
                     </div>
