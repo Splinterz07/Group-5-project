@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { register } from "../../lib/api";
+import { register, setUserRole } from "../../lib/api";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -30,6 +30,7 @@ export default function SignupPage() {
     setError("");
     try {
       await register(form.fullName, form.email, form.password);
+      setUserRole("user");
       router.push("/login");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Registration failed");

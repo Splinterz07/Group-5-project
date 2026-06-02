@@ -1,9 +1,16 @@
+"use client";
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 
 type Role = "user" | "organizer";
 
 export default function SignUp() {
+  const router = useRouter();
   const [role, setRole] = useState<Role>("user");
+
+  const handleContinue = () => {
+    router.push(role === "organizer" ? "/signup-organizer" : "/signup");
+  };
 
   return (
     <div
@@ -63,6 +70,13 @@ export default function SignUp() {
                 }
               />
             </div>
+
+            <button
+              onClick={handleContinue}
+              className="mt-6 w-full rounded-full bg-[#6b2fb5] py-3 text-[14px] font-bold text-white hover:bg-[#5a279c] transition"
+            >
+              CONTINUE
+            </button>
 
             <p className="mt-6 text-center text-[13px] text-[#3a3340]">
               Already have an account?{" "}

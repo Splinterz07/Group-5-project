@@ -13,9 +13,21 @@ export const removeToken = () => {
   localStorage.removeItem('token');
   localStorage.removeItem('userName');
   localStorage.removeItem('userEmail');
+  localStorage.removeItem('userRole');
 };
 
 export const isLoggedIn = () => !!getToken();
+
+export const setUserRole = (role: 'user' | 'organizer') => {
+  localStorage.setItem('userRole', role);
+};
+
+export const getUserRole = (): 'user' | 'organizer' => {
+  if (typeof window === 'undefined') return 'user';
+  return (localStorage.getItem('userRole') as 'user' | 'organizer') || 'user';
+};
+
+export const isOrganizer = () => getUserRole() === 'organizer';
 
 export const getUserName = () => {
   if (typeof window === 'undefined') return '';

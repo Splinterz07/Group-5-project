@@ -1,9 +1,12 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { register, setUserRole } from "@/lib/api";
 
 // Cursive font for the Bookify logo
 
 export default function BookifyRegister() {
+  const router = useRouter();
   const [form, setForm] = useState({
     fullName: "",
     businessName: "",
@@ -11,9 +14,33 @@ export default function BookifyRegister() {
     password: "",
     confirmPassword: "",
   });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async () => {
+    setError("");
+    if (!form.fullName || !form.email || !form.password) {
+      setError("Please fill in your name, email and password.");
+      return;
+    }
+    if (form.password !== form.confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+    setLoading(true);
+    try {
+      await register(form.fullName, form.email, form.password);
+      setUserRole("organizer");
+      router.push("/login");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Registration failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -88,18 +115,28 @@ export default function BookifyRegister() {
           ))}
 
           {/* CREATE ACCOUNT button */}
-          <button style={styles.createBtn}>CREATE ACCOUNT</button>
+          {error && (
+            <p style={{ color: "#f87171", fontSize: 13, marginBottom: 8 }}>{error}</p>
+          )}
+          <button
+            type="button"
+            style={styles.createBtn}
+            onClick={handleSubmit}
+            disabled={loading}
+          >
+            {loading ? "CREATING..." : "CREATE ACCOUNT"}
+          </button>
 
           {/* Already have an account */}
           <p style={styles.alreadyText}>
             Already have an account?{" "}
-            <a href="#" style={styles.loginLink}>Login</a>
+            <a href="/login" style={styles.loginLink}>Login</a>
           </p>
 
           {/* Terms */}
           <p style={styles.termsText}>
             By signing up you agree to our{" "}
-            <a href="#" style={styles.termsLink}>terms &amp; conditions</a>
+            <a href="/terms" style={styles.termsLink}>terms &amp; conditions</a>
           </p>
         </div>
       </div>
