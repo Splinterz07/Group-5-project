@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { fetchEvents } from "@/lib/api";
 import DarkNavbar from "@/app/_components/DarkNavbar";
-import SearchEvents from "@/app/_components/SearchEvents";
+import SearchEvent from "@/app/_components/SearchEvents";
 
 interface Event {
   id: number;
@@ -38,12 +38,13 @@ export default function EventsPage() {
     loadEvents();
   }, []);
 
-  const handleSearchResults = (results: Event[]) => {
-    setDisplayedEvents(results);
-  };
-
-  const handleSearchChange = (query: string) => {
+  const handleSearchComplete = (query: string, results: any[]) => {
     setSearchQuery(query);
+    if (query.trim()) {
+      setDisplayedEvents(results);
+    } else {
+      setDisplayedEvents(events);
+    }
   };
 
   return (
@@ -61,11 +62,10 @@ export default function EventsPage() {
       {/* Search Bar */}
       <div className="px-8 py-6 bg-gray-900 border-b border-gray-800">
         <div className="max-w-3xl">
-          <SearchEvents
-            onSearchResults={handleSearchResults}
-            onSearchChange={handleSearchChange}
+          <SearchEvent
             placeholder="Search events by title, location..."
             variant="dark"
+            onSearchComplete={handleSearchComplete}
           />
         </div>
       </div>

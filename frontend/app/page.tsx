@@ -2,23 +2,17 @@
 import Link from "next/link";
 import { useState } from "react";
 import Navbar from "@/app/_components/Navbar";
-import SearchEvents from "@/app/_components/SearchEvents";
+import SearchEvent from "@/app/_components/SearchEvents";
 
 export default function LandingPage() {
   const [email, setEmail] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
 
-  const handleSearchResults = (results: any[]) => {
-    setSearchResults(results);
-    if (results.length > 0) {
-      setShowSearchResults(true);
-    }
-  };
-
-  const handleSearchChange = (query: string) => {
+  const handleSearchComplete = (query: string, results: any[]) => {
     if (query.trim()) {
-      setShowSearchResults(true);
+      setSearchResults(results);
+      setShowSearchResults(results.length > 0);
     } else {
       setShowSearchResults(false);
       setSearchResults([]);
@@ -45,18 +39,17 @@ export default function LandingPage() {
           <h1 className="text-white text-3xl md:text-4xl font-bold tracking-widest uppercase leading-tight" style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic" }}>
             Find Your Next Experience
           </h1>
-          <div className="w-full max-w-sm mt-2">
-            <SearchEvents
-              onSearchResults={handleSearchResults}
-              onSearchChange={handleSearchChange}
+          <div className="relative w-full max-w-sm mt-2">
+            <SearchEvent
               placeholder="search event"
               variant="light"
-              className="rounded-full"
+              rounded="full"
+              onSearchComplete={handleSearchComplete}
             />
             
             {/* Search Results Dropdown */}
             {showSearchResults && searchResults.length > 0 && (
-              <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-full max-w-sm bg-white rounded-lg shadow-lg border border-gray-200 max-h-80 overflow-y-auto z-50">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 max-h-80 overflow-y-auto z-50">
                 {searchResults.map((event) => (
                   <button
                     key={event.id}

@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import { fetchEvents } from "../../lib/api";
 import DarkNavbar from "@/app/_components/DarkNavbar";
-import SearchEvents from "@/app/_components/SearchEvents";
+import SearchEvent from "@/app/_components/SearchEvents";
 
 interface Event {
   id: number;
@@ -42,13 +42,17 @@ export default function HomePage() {
     loadEvents();
   }, []);
 
-  const handleSearchResults = (results: Event[]) => {
-    setDisplayedEvents(results);
-    setActiveSort(null); // Clear sort when searching
-  };
-
-  const handleSearchChange = (query: string) => {
+  const handleSearchComplete = (query: string, results: any[]) => {
     setSearchQuery(query);
+    setActiveSort(null); // Clear sort when searching
+    
+    if (query.trim()) {
+      setDisplayedEvents(results);
+      setSortedEvents(results);
+    } else {
+      setDisplayedEvents(events);
+      setSortedEvents(events);
+    }
   };
 
   const handleSort = (type: string) => {
@@ -76,11 +80,10 @@ export default function HomePage() {
       {/* ── SEARCH BAR ── */}
       <div className="px-8 py-6 bg-gray-900 border-b border-gray-800">
         <div className="max-w-3xl">
-          <SearchEvents
-            onSearchResults={handleSearchResults}
-            onSearchChange={handleSearchChange}
+          <SearchEvent
             placeholder="Search events by title, location..."
             variant="dark"
+            onSearchComplete={handleSearchComplete}
           />
         </div>
       </div>
