@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import DarkNavbar from "@/app/_components/DarkNavbar";
 
 
 const posts = [
@@ -70,18 +71,7 @@ export default function BookifyBlog() {
       <div style={styles.bgOverlay} />
 
       {/* NAVBAR */}
-      <nav style={styles.nav}>
-        <span style={styles.logo}>Bookify</span>
-        <div style={styles.navCenter}>
-          {["Home", "Event/Booking", "Blog", "Contact", "Profile"].map((l) => (
-            <a key={l} href="#" style={{ ...styles.navLink, ...(l === "Blog" ? styles.navLinkActive : {}) }}>
-              {l}
-            </a>
-          ))}
-          <button style={styles.loginBtn}>LOG IN</button>
-        </div>
-      </nav>
-
+      <DarkNavbar />
       {/* HERO */}
       <div style={styles.hero}>
         <p style={styles.heroEyebrow}>OUR BLOG</p>

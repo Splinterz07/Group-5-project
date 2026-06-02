@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import DarkNavbar from "@/app/_components/DarkNavbar";
 import { useRouter } from "next/navigation";
 import { register, setUserRole } from "@/lib/api";
 
@@ -49,23 +50,7 @@ export default function BookifyRegister() {
       <div style={styles.bgOverlay} />
 
       {/* ── NAVBAR ── */}
-      <nav style={styles.nav}>
-        {/* Logo – italic, white, slightly larger */}
-        <span style={styles.logo}>Bookify</span>
-
-        {/* Nav links centred in the remaining space */}
-        <div style={styles.navCenter}>
-          {["Home", "Event/Booking", "Blog", "Contact", "Profile"].map((l) => (
-            <a key={l} href="#" style={styles.navLink}>
-              {l}
-            </a>
-          ))}
-
-          {/* LOG IN button sits right after Profile with consistent gap */}
-          <button style={styles.loginBtn}>LOG IN</button>
-        </div>
-      </nav>
-
+      <DarkNavbar />
       {/* ── CARD ── */}
       <div style={styles.pageBody}>
         <div style={styles.card}>

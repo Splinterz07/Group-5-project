@@ -1,4 +1,5 @@
 import React from "react";
+import DarkNavbar from "@/app/_components/DarkNavbar";
 
 export default function OrganizerDashboard() {
   return (
@@ -18,22 +19,7 @@ export default function OrganizerDashboard() {
         />
 
         {/* Navbar */}
-        <nav className="relative flex items-center justify-between px-8 py-3 bg-black/30">
-          <span
-            className="text-2xl text-white italic"
-            style={{ fontFamily: "'Brush Script MT', cursive" }}
-          >
-            Bookify
-          </span>
-          <div className="flex items-center gap-8 text-[12px] text-white">
-            <span className="cursor-pointer">Home</span>
-            <span className="cursor-pointer">Event/Booking</span>
-            <span className="cursor-pointer">Blog</span>
-            <span className="cursor-pointer">Contact</span>
-            <span className="cursor-pointer">Profile</span>
-          </div>
-        </nav>
-
+      <DarkNavbar />
         <main className="relative px-8 py-5">
           {/* Header */}
           <div className="flex items-start justify-between">

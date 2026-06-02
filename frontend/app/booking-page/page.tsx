@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import DarkNavbar from "@/app/_components/DarkNavbar";
 
 type PaymentMethod = "card" | "bank" | "ussd";
 
@@ -31,22 +32,7 @@ export default function BookingConfirmation() {
         />
 
         {/* Navbar */}
-        <nav className="relative flex items-center justify-between px-10 py-5 bg-black/30">
-          <span
-            className="text-3xl text-white italic"
-            style={{ fontFamily: "'Brush Script MT', cursive" }}
-          >
-            Bookify
-          </span>
-          <ul className="flex items-center gap-12 text-[15px] text-white">
-            <li className="cursor-pointer">Home</li>
-            <li className="cursor-pointer">Event/Booking</li>
-            <li className="cursor-pointer">Blog</li>
-            <li className="cursor-pointer">Contact</li>
-            <li className="cursor-pointer">Profile</li>
-          </ul>
-        </nav>
-
+      <DarkNavbar />
         {/* Main card */}
         <main className="relative px-6 py-8 flex justify-center">
           <div

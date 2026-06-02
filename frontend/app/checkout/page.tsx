@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import DarkNavbar from "@/app/_components/DarkNavbar";
 
 type PaymentMethod = "credit" | "paypal" | "apple" | "google";
 
@@ -269,15 +270,7 @@ export default function BookifyCheckout() {
         <div className="bk-bg" />
         <div className="bk-overlay" />
 
-        <nav className="bk-nav">
-          <span className="bk-logo">Bookify</span>
-          <ul className="bk-nav-links">
-            {["Home", "Event/Booking", "Blog", "Contact", "Profile"].map(l => (
-              <li key={l}><a href="#">{l}</a></li>
-            ))}
-          </ul>
-        </nav>
-
+      <DarkNavbar />
         <div className="bk-content">
           <h1 className="bk-title">Checkout</h1>
           <StepIndicator current={2} />
