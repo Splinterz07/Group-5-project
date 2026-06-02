@@ -2,9 +2,32 @@
 import Link from "next/link";
 import { useState } from "react";
 import Navbar from "@/app/_components/Navbar";
+import SearchEvents from "@/app/_components/SearchEvents";
 
 export default function LandingPage() {
   const [email, setEmail] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+
+  const handleSearchResults = (results: any[]) => {
+    setSearchResults(results);
+    if (results.length > 0) {
+      setShowSearchResults(true);
+    }
+  };
+
+  const handleSearchChange = (query: string) => {
+    if (query.trim()) {
+      setShowSearchResults(true);
+    } else {
+      setShowSearchResults(false);
+      setSearchResults([]);
+    }
+  };
+
+  const handleViewEvent = (eventId: number) => {
+    window.location.href = `/events/${eventId}`;
+  };
 
   return (
     <div className="min-h-screen font-sans">
@@ -22,11 +45,30 @@ export default function LandingPage() {
           <h1 className="text-white text-3xl md:text-4xl font-bold tracking-widest uppercase leading-tight" style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic" }}>
             Find Your Next Experience
           </h1>
-          <div className="flex items-center gap-2 bg-white rounded-full px-4 py-2.5 w-full max-w-sm shadow mt-2">
-            <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input type="text" placeholder="search event" className="bg-transparent flex-1 text-sm text-gray-600 outline-none placeholder-gray-400" />
+          <div className="w-full max-w-sm mt-2">
+            <SearchEvents
+              onSearchResults={handleSearchResults}
+              onSearchChange={handleSearchChange}
+              placeholder="search event"
+              variant="light"
+              className="rounded-full"
+            />
+            
+            {/* Search Results Dropdown */}
+            {showSearchResults && searchResults.length > 0 && (
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-full max-w-sm bg-white rounded-lg shadow-lg border border-gray-200 max-h-80 overflow-y-auto z-50">
+                {searchResults.map((event) => (
+                  <button
+                    key={event.id}
+                    onClick={() => handleViewEvent(event.id)}
+                    className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors"
+                  >
+                    <p className="font-semibold text-gray-900">{event.title}</p>
+                    <p className="text-sm text-gray-600">{event.location}</p>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </section>

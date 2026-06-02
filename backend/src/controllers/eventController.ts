@@ -3,8 +3,25 @@ import prisma from '../lib/prisma';
 
 export const getAllEvents = async (req: Request, res: Response) => {
   try {
-    const events = await prisma.event.findMany();
-    res.json(events);
+    const { search } = req.query;
+    
+    if (search && typeof search === 'string') {
+      // Search events by title, description, or location
+      const events = await prisma.event.findMany({
+        where: {
+          OR: [
+            { title: { contains: search, mode: 'insensitive' } },
+            { description: { contains: search, mode: 'insensitive' } },
+            { location: { contains: search, mode: 'insensitive' } }
+          ]
+        }
+      });
+      res.json(events);
+    } else {
+      // Get all events
+      const events = await prisma.event.findMany();
+      res.json(events);
+    }
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch events' });
   }

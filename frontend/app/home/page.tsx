@@ -127,11 +127,16 @@ export default function HomePage() {
 
       {/* ── EVENTS FOR YOU ── */}
       <section className="px-8 py-8 bg-gray-900 mt-2">
-        <h2 className="text-base font-semibold text-white mb-5">Events for you</h2>
+        <h2 className="text-base font-semibold text-white mb-5">
+          {searchQuery ? `Search Results for "${searchQuery}"` : "Events for you"}
+        </h2>
         <div className="flex flex-col gap-4">
           {eventsLoading && <p className="text-gray-400 text-sm">Loading events...</p>}
-          {!eventsLoading && sortedEvents.length === 0 && (
+          {!eventsLoading && events.length === 0 && (
             <p className="text-gray-400 text-sm">No events available at the moment.</p>
+          )}
+          {!eventsLoading && events.length > 0 && displayedEvents.length === 0 && searchQuery && (
+            <p className="text-gray-400 text-sm">No events found matching "{searchQuery}"</p>
           )}
           {sortedEvents.map((event) => (
             <div key={event.id} className="flex items-center gap-4 bg-gray-800 rounded-xl overflow-hidden border border-gray-700 hover:border-purple-500 transition-all">
