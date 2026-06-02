@@ -26,7 +26,7 @@ export default function DarkNavbar() {
         Bookify
       </span>
       <div className="hidden md:flex items-center gap-8 text-sm text-gray-300">
-        <Link href="/" className="hover:text-white transition-colors">Home</Link>
+        <Link href="/home" className="hover:text-white transition-colors">Home</Link>
         <Link href="/events" className="hover:text-white transition-colors">Event/Booking</Link>
         <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
         <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
