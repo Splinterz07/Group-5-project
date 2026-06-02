@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { fetchBookings, cancelBooking, isLoggedIn, removeToken, getUserName, getUserEmail } from "../../lib/api";
+import DarkNavbar from "@/app/_components/DarkNavbar";
 
 const TABS = ["Account Details", "My Bookings", "Payments"] as const;
 type Tab = (typeof TABS)[number];
@@ -126,11 +127,6 @@ export default function ProfilePage() {
     }
   };
 
-  const handleLogout = () => {
-    removeToken();
-    router.push("/login");
-  };
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -177,26 +173,9 @@ export default function ProfilePage() {
       <div className="absolute inset-0 bg-black/55" />
 
       {/* Navbar */}
-      <nav className="relative z-10 flex items-center justify-between px-10 py-5">
-        <span className="text-white text-2xl" style={{ fontFamily: "'Dancing Script', cursive", fontWeight: 700 }}>
-          Bookify
-        </span>
-        <div className="hidden md:flex items-center gap-8 text-white text-sm font-medium">
-          <Link href="/" className="hover:text-purple-300 transition-colors">Home</Link>
-          <Link href="/events" className="hover:text-purple-300 transition-colors">Event/Booking</Link>
-          <Link href="/blog" className="hover:text-purple-300 transition-colors">Blog</Link>
-          <Link href="/contact" className="hover:text-purple-300 transition-colors">Contact</Link>
-          <Link href="/profile" className="text-purple-300">Profile</Link>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleLogout}
-            className="px-5 py-2 rounded-full border border-red-400 text-white text-sm hover:bg-red-400/20 transition-all"
-          >
-            LOG OUT
-          </button>
-        </div>
-      </nav>
+      <div className="relative z-10">
+        <DarkNavbar />
+      </div>
 
       {/* Profile Card */}
       <div className="relative z-10 flex flex-1 items-start justify-center px-4 py-10">

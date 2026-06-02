@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { fetchEvents } from "../../lib/api";
-import Navbar from "@/app/_components/Navbar";
+import DarkNavbar from "@/app/_components/DarkNavbar";
 
 interface Event {
   id: number;
@@ -21,13 +21,7 @@ export default function HomePage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [sortedEvents, setSortedEvents] = useState<Event[]>([]);
   const [eventsLoading, setEventsLoading] = useState(true);
-  const [userName, setUserName] = useState<string | null>(null);
   const [activeSort, setActiveSort] = useState<string | null>(null);
-
-  useEffect(() => {
-    const name = localStorage.getItem("userName");
-    setUserName(name);
-  }, []);
 
   useEffect(() => {
     const loadEvents = async () => {
@@ -57,18 +51,11 @@ export default function HomePage() {
     setSortedEvents(copy);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("userName");
-    localStorage.removeItem("userEmail");
-    setUserName(null);
-  };
-
   return (
     <div className="min-h-screen bg-gray-950 text-white font-sans">
 
       {/* ── NAVBAR ── */}
-      <Navbar />
+      <DarkNavbar />
 
       {/* ── SORT BAR ── */}
       <div className="px-8 py-3 bg-gray-950 flex items-center gap-6 text-sm text-gray-400 border-b border-gray-800">
