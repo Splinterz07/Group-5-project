@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import Navbar from "@/app/_components/Navbar";
+import Footer from "@/app/_components/Footer";
 
 interface TeamMember {
   name: string;
@@ -183,74 +184,7 @@ export default function AboutPage() {
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="bg-white border-t border-gray-200 px-8 pt-12 pb-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 pb-10 border-b border-gray-200">
-            <div>
-              <span className="text-lg font-bold italic" style={{ fontFamily: "'Dancing Script', cursive" }}>
-                Bookify.com
-              </span>
-              <p className="text-gray-500 text-sm mt-1 mb-4 leading-relaxed">
-                A ticketing platform for making memorable experience.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-4">Company</h4>
-              <ul className="space-y-2 text-sm text-gray-500">
-                <li>
-                  <Link href="/" className="hover:text-purple-600 transition-colors">
-                    Homepage
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/about" className="hover:text-purple-600 transition-colors">
-                    About Us
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/how-it-works" className="hover:text-purple-600 transition-colors">
-                    How Bookify works
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-4">Follow us</h4>
-              <ul className="space-y-2 text-sm text-gray-500">
-                <li>
-                  <a href="#" className="hover:text-purple-600 transition-colors">
-                    Facebook
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-purple-600 transition-colors">
-                    Instagram
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-purple-600 transition-colors">
-                    Tiktok
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div className="pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-gray-400">
-            <p>Copyright 2026 . All rights reserved.</p>
-            <div className="flex items-center gap-6">
-              <Link href="/terms" className="hover:text-gray-600 transition-colors">
-                Terms & Conditions
-              </Link>
-              <Link href="/privacy" className="hover:text-gray-600 transition-colors">
-                Privacy policy
-              </Link>
-              <Link href="/refund" className="hover:text-gray-600 transition-colors">
-                Refund Policy
-              </Link>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer variant="light" showSubscribe={false} />
     </div>
   );
 }
