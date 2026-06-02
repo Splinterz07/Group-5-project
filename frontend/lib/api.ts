@@ -70,6 +70,13 @@ export const fetchEvents = async () => {
   return data;
 };
 
+export const searchEvents = async (query: string) => {
+  const res = await authFetch(`/api/events?search=${encodeURIComponent(query)}`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || 'Failed to search events');
+  return data;
+};
+
 export const fetchEvent = async (id: number) => {
   const res = await authFetch(`/api/events/${id}`);
   const data = await res.json();

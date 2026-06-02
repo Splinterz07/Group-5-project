@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import { fetchEvents } from "../../lib/api";
 import DarkNavbar from "@/app/_components/DarkNavbar";
+import SearchEvents from "@/app/_components/SearchEvents";
 
 interface Event {
   id: number;
@@ -20,8 +21,10 @@ export default function HomePage() {
   const [email, setEmail] = useState("");
   const [events, setEvents] = useState<Event[]>([]);
   const [sortedEvents, setSortedEvents] = useState<Event[]>([]);
+  const [displayedEvents, setDisplayedEvents] = useState<Event[]>([]);
   const [eventsLoading, setEventsLoading] = useState(true);
   const [activeSort, setActiveSort] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const loadEvents = async () => {
@@ -29,6 +32,7 @@ export default function HomePage() {
         const data = await fetchEvents();
         setEvents(data);
         setSortedEvents(data);
+        setDisplayedEvents(data);
       } catch (err) {
         console.error("Failed to load events", err);
       } finally {
@@ -38,9 +42,20 @@ export default function HomePage() {
     loadEvents();
   }, []);
 
+  const handleSearchResults = (results: Event[]) => {
+    setDisplayedEvents(results);
+    setActiveSort(null); // Clear sort when searching
+  };
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+  };
+
   const handleSort = (type: string) => {
     setActiveSort(type);
-    const copy = [...events];
+    // If searching, use sortedEvents, otherwise use events
+    const sourceEvents = searchQuery ? displayedEvents : events;
+    const copy = [...sourceEvents];
     if (type === "Price") {
       copy.sort((a, b) => a.price - b.price);
     } else if (type === "Location") {
@@ -49,6 +64,7 @@ export default function HomePage() {
       copy.sort((a, b) => b.availableSeats - a.availableSeats);
     }
     setSortedEvents(copy);
+    setDisplayedEvents(copy);
   };
 
   return (
@@ -56,6 +72,18 @@ export default function HomePage() {
 
       {/* ── NAVBAR ── */}
       <DarkNavbar />
+
+      {/* ── SEARCH BAR ── */}
+      <div className="px-8 py-6 bg-gray-900 border-b border-gray-800">
+        <div className="max-w-3xl">
+          <SearchEvents
+            onSearchResults={handleSearchResults}
+            onSearchChange={handleSearchChange}
+            placeholder="Search events by title, location..."
+            variant="dark"
+          />
+        </div>
+      </div>
 
       {/* ── SORT BAR ── */}
       <div className="px-8 py-3 bg-gray-950 flex items-center gap-6 text-sm text-gray-400 border-b border-gray-800">

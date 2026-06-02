@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { fetchEvents } from "@/lib/api";
 import DarkNavbar from "@/app/_components/DarkNavbar";
+import SearchEvents from "@/app/_components/SearchEvents";
 
 interface Event {
   id: number;
@@ -17,14 +18,17 @@ interface Event {
 
 export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
+  const [displayedEvents, setDisplayedEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const loadEvents = async () => {
       try {
         const data = await fetchEvents();
         setEvents(data);
+        setDisplayedEvents(data);
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : "Failed to load events");
       } finally {
@@ -33,6 +37,14 @@ export default function EventsPage() {
     };
     loadEvents();
   }, []);
+
+  const handleSearchResults = (results: Event[]) => {
+    setDisplayedEvents(results);
+  };
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+  };
 
   return (
     <div className="min-h-screen bg-gray-950 text-white font-sans">
@@ -44,6 +56,18 @@ export default function EventsPage() {
       <div className="px-8 py-8 bg-gray-900 border-b border-gray-800">
         <h1 className="text-2xl font-bold text-white">All Events</h1>
         <p className="text-gray-400 text-sm mt-1">Browse and book your next experience</p>
+      </div>
+
+      {/* Search Bar */}
+      <div className="px-8 py-6 bg-gray-900 border-b border-gray-800">
+        <div className="max-w-3xl">
+          <SearchEvents
+            onSearchResults={handleSearchResults}
+            onSearchChange={handleSearchChange}
+            placeholder="Search events by title, location..."
+            variant="dark"
+          />
+        </div>
       </div>
 
       {/* Content */}
@@ -60,8 +84,12 @@ export default function EventsPage() {
           <p className="text-gray-400 text-sm">No events available at the moment.</p>
         )}
 
+        {!loading && !error && events.length > 0 && displayedEvents.length === 0 && searchQuery && (
+          <p className="text-gray-400 text-sm">No events found matching "{searchQuery}"</p>
+        )}
+
         <div className="flex flex-col gap-4">
-          {events.map((event) => (
+          {displayedEvents.map((event) => (
             <div key={event.id} className="flex items-center gap-4 bg-gray-800 rounded-xl overflow-hidden border border-gray-700 hover:border-purple-500 transition-all">
               <div className="w-36 h-24 flex-shrink-0 bg-purple-900/40 flex items-center justify-center">
                 <svg className="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
