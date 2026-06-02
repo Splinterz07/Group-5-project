@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
 import validate from '../middleware/validate';
+import authMiddleware from '../middleware/auth';
 import { getAllEvents, getEventById, createEvent, updateEvent, deleteEvent } from '../controllers/eventController';
 
 const router = Router();
@@ -15,8 +16,8 @@ const eventValidation = [
 
 router.get('/', getAllEvents);
 router.get('/:id', getEventById);
-router.post('/', eventValidation, validate, createEvent);
-router.put('/:id', updateEvent);
-router.delete('/:id', deleteEvent);
+router.post('/', authMiddleware, eventValidation, validate, createEvent);
+router.put('/:id', authMiddleware, updateEvent);
+router.delete('/:id', authMiddleware, deleteEvent);
 
 export default router;

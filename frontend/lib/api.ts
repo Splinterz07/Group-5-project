@@ -97,7 +97,7 @@ export const fetchEvent = async (id: number) => {
 };
 
 export const fetchBookings = async () => {
-  const res = await authFetch('/api/bookings');
+  const res = await authFetch('/api/bookings/my-bookings');
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || 'Failed to fetch bookings');
   return data;

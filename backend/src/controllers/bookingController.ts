@@ -11,6 +11,17 @@ export const getAllBookings = async (req: AuthRequest, res: Response) => {
   }
 };
 
+export const getMyBookings = async (req: AuthRequest, res: Response) => {
+  try {
+    const bookings = await prisma.booking.findMany({
+      where: { userId: req.userId }
+    });
+    res.json(bookings);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch bookings' });
+  }
+};
+
 export const createBooking = async (req: AuthRequest, res: Response) => {
   try {
     const { eventId, name, email, seats } = req.body;
@@ -18,10 +29,12 @@ export const createBooking = async (req: AuthRequest, res: Response) => {
     const event = await prisma.event.findUnique({
       where: { id: Number(eventId) }
     });
+
     if (!event) {
       res.status(404).json({ message: 'Event not found' });
       return;
     }
+
     if (event.availableSeats < Number(seats)) {
       res.status(400).json({ message: 'Not enough available seats' });
       return;
@@ -53,6 +66,7 @@ export const cancelBooking = async (req: AuthRequest, res: Response) => {
     const booking = await prisma.booking.findUnique({
       where: { id: Number(req.params.id) }
     });
+
     if (!booking) {
       res.status(404).json({ message: 'Booking not found' });
       return;
