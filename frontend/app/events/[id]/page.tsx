@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { fetchEvent, createBooking, isLoggedIn } from "../../../lib/api";
+import { fetchEvent, createBooking, isLoggedIn } from "@/lib/api";
 
 interface Event {
   id: number;
@@ -27,6 +27,12 @@ export default function EventDetailPage() {
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [bookingError, setBookingError] = useState("");
+  const [userName, setUserName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const name = localStorage.getItem("userName");
+    setUserName(name);
+  }, []);
 
   useEffect(() => {
     const loadEvent = async () => {
@@ -60,6 +66,13 @@ export default function EventDetailPage() {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("userName");
+    localStorage.removeItem("userEmail");
+    setUserName(null);
+  };
+
   return (
     <div className="min-h-screen bg-gray-950 text-white font-sans">
 
@@ -76,12 +89,28 @@ export default function EventDetailPage() {
           <Link href="/profile" className="hover:text-white transition-colors">Profile</Link>
         </div>
         <div className="flex items-center gap-3">
-          <Link href="/signup" className="px-4 py-1.5 border border-purple-500 text-white text-sm rounded hover:bg-purple-500/20 transition-all">
-            SIGN UP
-          </Link>
-          <Link href="/login" className="px-4 py-1.5 bg-purple-600 text-white text-sm rounded hover:bg-purple-700 transition-all">
-            LOG IN
-          </Link>
+          {userName ? (
+            <>
+              <Link href="/profile" className="text-sm text-gray-300 hover:text-white transition-colors">
+                Hi, {userName}
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="px-4 py-1.5 bg-purple-600 text-white text-sm rounded hover:bg-purple-700 transition-all"
+              >
+                LOG OUT
+              </button>
+            </>
+          ) : (
+            <>
+              <Link href="/signup" className="px-4 py-1.5 border border-purple-500 text-white text-sm rounded hover:bg-purple-500/20 transition-all">
+                SIGN UP
+              </Link>
+              <Link href="/login" className="px-4 py-1.5 bg-purple-600 text-white text-sm rounded hover:bg-purple-700 transition-all">
+                LOG IN
+              </Link>
+            </>
+          )}
         </div>
       </nav>
 
