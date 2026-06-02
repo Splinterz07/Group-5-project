@@ -1,0 +1,662 @@
+diff --git a/frontend/app/_components/DarkNavbar.tsx b/frontend/app/_components/DarkNavbar.tsx
+index 35eda38..edfe6ab 100644
+--- a/frontend/app/_components/DarkNavbar.tsx
++++ b/frontend/app/_components/DarkNavbar.tsx
+@@ -2,40 +2,67 @@
+ import Link from "next/link";
+ import { useEffect, useState } from "react";
+ import { useRouter } from "next/navigation";
++import { getUserName, isLoggedIn, isOrganizer, removeToken } from "@/lib/api";
++import NavDropdown, { DropItem } from "./NavDropdown";
++
++const eventItems: DropItem[] = [
++  { label: "Browse Events", href: "/events" },
++  { label: "Book a Ticket", href: "/booking-page" },
++];
++
++const moreItems: DropItem[] = [
++  { label: "Book a Ticket", href: "/booking-page" },
++  { label: "My Tickets", href: "/my-tickets" },
++  { label: "Upcoming Tickets", href: "/upcoming-tickets" },
++  { label: "Past Tickets", href: "/past-tickets" },
++  { label: "Cancelled Tickets", href: "/cancelled-tickets" },
++  { label: "Checkout", href: "/checkout" },
++];
++
++const organizerItems: DropItem[] = [
++  { label: "Create Event", href: "/organizer/create" },
++  { label: "Organizer Dashboard", href: "/organizer-dashboard" },
++  { label: "Attendee List", href: "/attendee-list" },
++];
+ 
+ export default function DarkNavbar() {
+-  const [userName, setUserName] = useState<string | null>(null);
++  const [loggedIn, setLoggedIn] = useState(false);
++  const [userName, setUserName] = useState("");
++  const [organizer, setOrganizer] = useState(false);
+   const router = useRouter();
+ 
+   useEffect(() => {
+-    const name = localStorage.getItem("userName");
+-    setUserName(name);
++    setLoggedIn(isLoggedIn());
++    setUserName(getUserName());
++    setOrganizer(isOrganizer());
+   }, []);
+ 
+   const handleLogout = () => {
+-    localStorage.removeItem("token");
+-    localStorage.removeItem("userName");
+-    localStorage.removeItem("userEmail");
+-    setUserName(null);
++    removeToken();
++    setLoggedIn(false);
++    setUserName("");
++    setOrganizer(false);
+     router.push("/");
+   };
+ 
+   return (
+     <nav className="flex items-center justify-between px-8 py-4 bg-gray-950 border-b border-gray-800">
+       <Link href="/" className="hover:text-white transition-colors">
+-      <span className="text-lg font-bold italic" style={{ fontFamily: "'Dancing Script', cursive" }}>
+-        Bookify
+-      </span>
++        <span className="text-lg font-bold italic" style={{ fontFamily: "'Dancing Script', cursive" }}>
++          Bookify
++        </span>
+       </Link>
+       <div className="hidden md:flex items-center gap-8 text-sm text-gray-300">
+         <Link href="/home" className="hover:text-white transition-colors">Home</Link>
+-        <Link href="/events" className="hover:text-white transition-colors">Event/Booking</Link>
++        <NavDropdown label="Event/Booking" items={eventItems} variant="dark" />
++        <NavDropdown label="More" items={moreItems} variant="dark" />
++        {organizer && <NavDropdown label="Organizer" items={organizerItems} variant="dark" />}
+         <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
+         <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
+         <Link href="/profile" className="hover:text-white transition-colors">Profile</Link>
+       </div>
+       <div className="flex items-center gap-3">
+-        {userName ? (
++        {loggedIn ? (
+           <>
+             <Link href="/profile" className="text-sm text-gray-300 hover:text-white transition-colors">
+               Hi, {userName}
+@@ -49,7 +76,7 @@ export default function DarkNavbar() {
+           </>
+         ) : (
+           <>
+-            <Link href="/signup" className="px-4 py-1.5 border border-purple-500 text-white text-sm rounded hover:bg-purple-500/20 transition-all">
++            <Link href="/signup-choice" className="px-4 py-1.5 border border-purple-500 text-white text-sm rounded hover:bg-purple-500/20 transition-all">
+               SIGN UP
+             </Link>
+             <Link href="/login" className="px-4 py-1.5 bg-purple-600 text-white text-sm rounded hover:bg-purple-700 transition-all">
+diff --git a/frontend/app/_components/NavDropdown.tsx b/frontend/app/_components/NavDropdown.tsx
+new file mode 100644
+index 0000000..9c71139
+--- /dev/null
++++ b/frontend/app/_components/NavDropdown.tsx
+@@ -0,0 +1,85 @@
++"use client";
++import Link from "next/link";
++import { useState, useRef, useEffect } from "react";
++
++export interface DropItem {
++  label: string;
++  href: string;
++}
++
++export default function NavDropdown({
++  label,
++  items,
++  variant = "light",
++}: {
++  label: string;
++  items: DropItem[];
++  variant?: "light" | "dark";
++}) {
++  const [open, setOpen] = useState(false);
++  const ref = useRef<HTMLDivElement>(null);
++
++  useEffect(() => {
++    const handleClickOutside = (e: MouseEvent) => {
++      if (ref.current && !ref.current.contains(e.target as Node)) {
++        setOpen(false);
++      }
++    };
++    document.addEventListener("mousedown", handleClickOutside);
++    return () => document.removeEventListener("mousedown", handleClickOutside);
++  }, []);
++
++  const triggerColor =
++    variant === "dark"
++      ? "text-gray-300 hover:text-white"
++      : "text-gray-700 hover:text-purple-600";
++  const menuBg =
++    variant === "dark"
++      ? "bg-gray-900 border-gray-800"
++      : "bg-white border-gray-200";
++  const itemColor =
++    variant === "dark"
++      ? "text-gray-300 hover:bg-gray-800 hover:text-white"
++      : "text-gray-700 hover:bg-purple-50 hover:text-purple-600";
++
++  return (
++    <div className="relative" ref={ref}>
++      <button
++        type="button"
++        onClick={() => setOpen((o) => !o)}
++        className={`flex items-center gap-1 transition-colors ${triggerColor}`}
++      >
++        {label}
++        <svg
++          className={`w-3 h-3 transition-transform ${open ? "rotate-180" : ""}`}
++          fill="none"
++          stroke="currentColor"
++          viewBox="0 0 24 24"
++        >
++          <path
++            strokeLinecap="round"
++            strokeLinejoin="round"
++            strokeWidth={2}
++            d="M19 9l-7 7-7-7"
++          />
++        </svg>
++      </button>
++      {open && (
++        <div
++          className={`absolute left-0 mt-2 min-w-[190px] rounded-lg border shadow-lg py-1 z-50 ${menuBg}`}
++        >
++          {items.map((item) => (
++            <Link
++              key={item.href}
++              href={item.href}
++              onClick={() => setOpen(false)}
++              className={`block px-4 py-2 text-sm transition-colors ${itemColor}`}
++            >
++              {item.label}
++            </Link>
++          ))}
++        </div>
++      )}
++    </div>
++  );
++}
+diff --git a/frontend/app/_components/Navbar.tsx b/frontend/app/_components/Navbar.tsx
+index 01c7dc8..c48a571 100644
+--- a/frontend/app/_components/Navbar.tsx
++++ b/frontend/app/_components/Navbar.tsx
+@@ -1,39 +1,65 @@
+ "use client";
+ import Link from "next/link";
+ import { useEffect, useState } from "react";
+-import { getUserName, isLoggedIn, removeToken } from "@/lib/api";
++import { getUserName, isLoggedIn, isOrganizer, removeToken } from "@/lib/api";
+ import { useRouter } from "next/navigation";
++import NavDropdown, { DropItem } from "./NavDropdown";
++
++const eventItems: DropItem[] = [
++  { label: "Browse Events", href: "/events" },
++  { label: "Book a Ticket", href: "/booking-page" },
++];
++
++const moreItems: DropItem[] = [
++  { label: "Book a Ticket", href: "/booking-page" },
++  { label: "My Tickets", href: "/my-tickets" },
++  { label: "Upcoming Tickets", href: "/upcoming-tickets" },
++  { label: "Past Tickets", href: "/past-tickets" },
++  { label: "Cancelled Tickets", href: "/cancelled-tickets" },
++  { label: "Checkout", href: "/checkout" },
++];
++
++const organizerItems: DropItem[] = [
++  { label: "Create Event", href: "/organizer/create" },
++  { label: "Organizer Dashboard", href: "/organizer-dashboard" },
++  { label: "Attendee List", href: "/attendee-list" },
++];
+ 
+ export default function Navbar() {
+   const [loggedIn, setLoggedIn] = useState(false);
+   const [userName, setUserName] = useState("");
++  const [organizer, setOrganizer] = useState(false);
+   const router = useRouter();
+ 
+   useEffect(() => {
+     setLoggedIn(isLoggedIn());
+     setUserName(getUserName());
++    setOrganizer(isOrganizer());
+   }, []);
+ 
+   const handleLogout = () => {
+     removeToken();
+     setLoggedIn(false);
+     setUserName("");
++    setOrganizer(false);
+     router.push("/");
+   };
+ 
+   return (
+     <nav className="flex items-center justify-between px-8 py-4 bg-white shadow-sm">
+       <div>
+-        <Link href="/" className="hover:text-white transition-colors">
+-        <span className="text-xl font-bold italic" style={{ fontFamily: "'Dancing Script', cursive" }}>
+-          Bookify
+-        </span>
++        <Link href="/" className="hover:text-purple-600 transition-colors">
++          <span className="text-xl font-bold italic" style={{ fontFamily: "'Dancing Script', cursive" }}>
++            Bookify
++          </span>
+         </Link>
+         <p className="text-xs text-gray-500">Discover. Book. Experience.</p>
+       </div>
+       <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-700">
+         <Link href="/home" className="hover:text-purple-600 transition-colors">Home</Link>
+-        <Link href="/events" className="hover:text-purple-600 transition-colors">Event/Booking</Link>
++        <NavDropdown label="Event/Booking" items={eventItems} variant="light" />
++        <NavDropdown label="More" items={moreItems} variant="light" />
++        {organizer && <NavDropdown label="Organizer" items={organizerItems} variant="light" />}
+         <Link href="/blog" className="hover:text-purple-600 transition-colors">Blog</Link>
+         <Link href="/contact" className="hover:text-purple-600 transition-colors">Contact</Link>
+         <Link href="/profile" className="hover:text-purple-600 transition-colors">Profile</Link>
+@@ -54,7 +80,7 @@ export default function Navbar() {
+             <Link href="/login" className="text-sm font-medium text-gray-700 hover:text-purple-600 transition-colors">
+               Log In
+             </Link>
+-            <Link href="/signup" className="px-4 py-2 bg-purple-600 text-white text-sm font-semibold rounded-full hover:bg-purple-700 transition-all">
++            <Link href="/signup-choice" className="px-4 py-2 bg-purple-600 text-white text-sm font-semibold rounded-full hover:bg-purple-700 transition-all">
+               SIGN UP
+             </Link>
+           </>
+@@ -62,4 +88,4 @@ export default function Navbar() {
+       </div>
+     </nav>
+   );
+-}
+\ No newline at end of file
++}
+diff --git a/frontend/app/attendee-list/page.tsx b/frontend/app/attendee-list/page.tsx
+index 88090bb..1a16a8f 100644
+--- a/frontend/app/attendee-list/page.tsx
++++ b/frontend/app/attendee-list/page.tsx
+@@ -1,190 +1,5 @@
+-import React from "react";
+-import React from "react";
+-
+-import React, { useEffect, useRef, useState } from "react";
+-
+-const MENU_ITEMS = [
+-  { label: "Attendee List", href: "/attendees" },
+-  { label: "Organizer Dashboard", href: "/dashboard" },
+-  { label: "Create Event", href: "/create-event" },
+-];
+-
+-export default function Navbar() {
+-  const [open, setOpen] = useState(false);
+-  const ref = useRef<HTMLDivElement>(null);
+-
+-  useEffect(() => {
+-    function handleClick(e: MouseEvent) {
+-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+-    }
+-    document.addEventListener("mousedown", handleClick);
+-    return () => document.removeEventListener("mousedown", handleClick);
+-  }, []);
+-
+-  return (
+-    <nav className="flex items-center justify-between px-8 py-3">
+-      <span
+-        className="text-2xl text-white italic"
+-        style={{ fontFamily: "'Brush Script MT', cursive" }}
+-      >
+-        Bookify
+-      </span>
+-
+-      <div className="flex items-center gap-8 text-[12px] text-white">
+-        <span className="cursor-pointer">Home</span>
+-        <span className="cursor-pointer">Event/Booking</span>
+-        <span className="cursor-pointer">Blog</span>
+-        <span className="cursor-pointer">Contact</span>
+-        <span className="cursor-pointer">Profile</span>
+-
+-        {/* Menu dropdown */}
+-        <div className="relative" ref={ref}>
+-          <button
+-            onClick={() => setOpen((o) => !o)}
+-            className="flex items-center gap-1.5 rounded-full bg-[#6b2fb5] px-4 py-1.5 text-[11px] font-bold text-white"
+-          >
+-            Menu
+-            <svg
+-              width="12"
+-              height="12"
+-              viewBox="0 0 24 24"
+-              fill="none"
+-              stroke="white"
+-              strokeWidth="3"
+-              className={`transition-transform ${open ? "rotate-180" : ""}`}
+-            >
+-              <path d="M6 9l6 6 6-6" />
+-            </svg>
+-          </button>
+-
+-          {open && (
+-            <div className="absolute right-0 z-20 mt-2 w-48 overflow-hidden rounded-xl bg-white shadow-xl">
+-              {MENU_ITEMS.map((item) => (
+-                <a
+-                  key={item.label}
+-                  href={item.href}
+-                  className="block px-4 py-3 text-[13px] text-[#15121c] hover:bg-[#ede8f5]"
+-                >
+-                  {item.label}
+-                </a>
+-              ))}
+-            </div>
+-          )}
+-        </div>
+-      </div>
+-    </nav>
+-  );
+-}
+-
+-
+-const ATTENDEES = [
+-  { id: "SQH3-001", name: "Femi Adebayo", email: "F.Adebayo@mail.com", squad: "Code Warriors", status: "Checked-in", ticket: "Premium" },
+-  { id: "SQH3-002", name: "Femi Adebayo", email: "F.Adebayo@mail.com", squad: "Code Warriors", status: "Checked-in", ticket: "Premium" },
+-  { id: "SQH3-003", name: "Femi Adebayo", email: "F.Adebayo@mail.com", squad: "Code Warriors", status: "Checked-in", ticket: "Premium" },
+-  { id: "SQH3-004", name: "Femi Adebayo", email: "F.Adebayo@mail.com", squad: "Code Warriors", status: "Checked-in", ticket: "Premium" },
+-  { id: "SQH3-005", name: "Femi Adebayo", email: "F.Adebayo@mail.com", squad: "Code Warriors", status: "Checked-in", ticket: "Premium" },
+-];
+-
+-export default function AttendeeList() {
+-  return (
+-    <div className="min-h-screen w-full font-sans relative overflow-hidden"
+-      style={{ background: "linear-gradient(135deg, #3a2160 0%, #241141 45%, #1c0d34 100%)" }}
+-    >
+-      {/* background image — replace src with your exported Figma asset */}
+-      <img
+-        src="/attendee-bg.png"
+-        alt=""
+-        className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-90"
+-      />
+-
+-      <div className="relative">
+-        {/* Navbar */}
+-        <nav className="flex items-center justify-between px-8 py-3">
+-          <span className="text-2xl text-white italic" style={{ fontFamily: "'Brush Script MT', cursive" }}>
+-            Bookify
+-          </span>
+-          <div className="flex items-center gap-8 text-[12px] text-white">
+-            <span className="cursor-pointer">Home</span>
+-            <span className="cursor-pointer">Event/Booking</span>
+-            <span className="cursor-pointer">Blog</span>
+-            <span className="cursor-pointer">Contact</span>
+-            <span className="cursor-pointer">Profile</span>
+-          </div>
+-        </nav>
+-
+-        <main className="px-8 py-4">
+-          {/* Column headers */}
+-          <div className="grid grid-cols-12 gap-2 px-5 pb-3 text-[13px] font-bold text-white">
+-            <div className="col-span-2">ATTENDEE ID</div>
+-            <div className="col-span-2">NAME</div>
+-            <div className="col-span-3">EMAIL ADDRESS</div>
+-            <div className="col-span-2">SQUAD NAME</div>
+-            <div className="col-span-2">STATUS</div>
+-            <div className="col-span-1">TICKET TYPE</div>
+-          </div>
+-
+-          {/* Rows container */}
+-          <div className="rounded-3xl p-4" style={{ background: "rgba(255,255,255,0.10)" }}>
+-            <div className="flex flex-col gap-3">
+-              {ATTENDEES.map((a) => (
+-                <div
+-                  key={a.id}
+-                  className="grid grid-cols-12 items-center gap-2 rounded-2xl px-5 py-4 text-[14px] text-[#15121c]"
+-                  style={{ background: "rgba(214,209,219,0.92)" }}
+-                >
+-                  <div className="col-span-2">{a.id}</div>
+-                  <div className="col-span-2">{a.name}</div>
+-                  <div className="col-span-3">{a.email}</div>
+-                  <div className="col-span-2">{a.squad}</div>
+-                  <div className="col-span-2 flex items-center gap-2">
+-                    <span className="h-3 w-3 rounded-full bg-green-500" />
+-                    {a.status}
+-                  </div>
+-                  <div className="col-span-1">{a.ticket}</div>
+-                </div>
+-              ))}
+-            </div>
+-          </div>
+-
+-          {/* Filters + search */}
+-          <div className="mt-5 flex items-center gap-4">
+-            <Dropdown label="Filter By Squad" />
+-            <Dropdown label="By Ticket Type" />
+-            <div className="flex flex-1 items-center gap-2 rounded-full bg-white px-5 py-3">
+-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b2fb5" strokeWidth="2.5">
+-                <circle cx="11" cy="11" r="7" />
+-                <path d="M21 21l-4.5-4.5" />
+-              </svg>
+-              <input
+-                placeholder="Search"
+-                className="flex-1 bg-transparent text-[15px] text-gray-600 outline-none"
+-              />
+-            </div>
+-          </div>
+-
+-          {/* Download button */}
+-          <div className="mt-8 flex justify-end">
+-            <button className="rounded-full bg-[#6b2fb5] px-8 py-3.5 text-[14px] font-bold text-white">
+-              DOWNLOAD ATTENDEE LIST
+-            </button>
+-          </div>
+-        </main>
+-      </div>
+-    </div>
+-  );
+-}
+-
+-function Dropdown({ label }: { label: string }) {
+-  return (
+-    <div className="flex w-56 items-center justify-between rounded-full bg-white px-5 py-3 text-[15px] text-gray-700">
+-      <span>{label}</span>
+-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#15121c" strokeWidth="2.5">
+-        <path d="M6 9l6 6 6-6" />
+-      </svg>
+-    </div>
+-  );
+-}
+-z
++"use client";
++import DarkNavbar from "@/app/_components/DarkNavbar";
+ 
+ const ATTENDEES = [
+   { id: "SQH3-001", name: "Femi Adebayo", email: "F.Adebayo@mail.com", squad: "Code Warriors", status: "Checked-in", ticket: "Premium" },
+@@ -196,6 +11,8 @@ const ATTENDEES = [
+ 
+ export default function AttendeeList() {
+   return (
++    <>
++      <DarkNavbar />
+     <div className="min-h-screen w-full font-sans relative overflow-hidden"
+       style={{ background: "linear-gradient(135deg, #3a2160 0%, #241141 45%, #1c0d34 100%)" }}
+     >
+@@ -280,6 +97,7 @@ export default function AttendeeList() {
+         </main>
+       </div>
+     </div>
++    </>
+   );
+ }
+ 
+diff --git a/frontend/app/sign up as/page.tsx b/frontend/app/signup-choice/page.tsx
+similarity index 88%
+rename from frontend/app/sign up as/page.tsx
+rename to frontend/app/signup-choice/page.tsx
+index 5ad2293..350150e 100644
+--- a/frontend/app/sign up as/page.tsx	
++++ b/frontend/app/signup-choice/page.tsx
+@@ -1,10 +1,17 @@
++"use client";
+ import React, { useState } from "react";
++import { useRouter } from "next/navigation";
+ 
+ type Role = "user" | "organizer";
+ 
+ export default function SignUp() {
++  const router = useRouter();
+   const [role, setRole] = useState<Role>("user");
+ 
++  const handleContinue = () => {
++    router.push(role === "organizer" ? "/signup-organizer" : "/signup");
++  };
++
+   return (
+     <div
+       className="min-h-screen w-full font-sans relative overflow-hidden"
+@@ -64,6 +71,13 @@ export default function SignUp() {
+               />
+             </div>
+ 
++            <button
++              onClick={handleContinue}
++              className="mt-6 w-full rounded-full bg-[#6b2fb5] py-3 text-[14px] font-bold text-white hover:bg-[#5a279c] transition"
++            >
++              CONTINUE
++            </button>
++
+             <p className="mt-6 text-center text-[13px] text-[#3a3340]">
+               Already have an account?{" "}
+               <a href="/login" className="font-bold text-[#6b2fb5] underline">
+diff --git a/frontend/app/signup-organizer/page.tsx b/frontend/app/signup-organizer/page.tsx
+index 04aaa13..21536b0 100644
+--- a/frontend/app/signup-organizer/page.tsx
++++ b/frontend/app/signup-organizer/page.tsx
+@@ -1,9 +1,12 @@
+ "use client";
+ import { useState } from "react";
++import { useRouter } from "next/navigation";
++import { register, setUserRole } from "@/lib/api";
+ 
+ // Cursive font for the Bookify logo
+ 
+ export default function BookifyRegister() {
++  const router = useRouter();
+   const [form, setForm] = useState({
+     fullName: "",
+     businessName: "",
+@@ -11,11 +14,35 @@ export default function BookifyRegister() {
+     password: "",
+     confirmPassword: "",
+   });
++  const [error, setError] = useState("");
++  const [loading, setLoading] = useState(false);
+ 
+   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+     setForm({ ...form, [e.target.name]: e.target.value });
+   };
+ 
++  const handleSubmit = async () => {
++    setError("");
++    if (!form.fullName || !form.email || !form.password) {
++      setError("Please fill in your name, email and password.");
++      return;
++    }
++    if (form.password !== form.confirmPassword) {
++      setError("Passwords do not match.");
++      return;
++    }
++    setLoading(true);
++    try {
++      await register(form.fullName, form.email, form.password);
++      setUserRole("organizer");
++      router.push("/login");
++    } catch (err) {
++      setError(err instanceof Error ? err.message : "Registration failed");
++    } finally {
++      setLoading(false);
++    }
++  };
++
+   return (
+     <div style={styles.root}>
+       {/* Dark tinted background */}
+@@ -88,18 +115,28 @@ export default function BookifyRegister() {
+           ))}
+ 
+           {/* CREATE ACCOUNT button */}
+-          <button style={styles.createBtn}>CREATE ACCOUNT</button>
++          {error && (
++            <p style={{ color: "#f87171", fontSize: 13, marginBottom: 8 }}>{error}</p>
++          )}
++          <button
++            type="button"
++            style={styles.createBtn}
++            onClick={handleSubmit}
++            disabled={loading}
++          >
++            {loading ? "CREATING..." : "CREATE ACCOUNT"}
++          </button>
+ 
+           {/* Already have an account */}
+           <p style={styles.alreadyText}>
+             Already have an account?{" "}
+-            <a href="#" style={styles.loginLink}>Login</a>
++            <a href="/login" style={styles.loginLink}>Login</a>
+           </p>
+ 
+           {/* Terms */}
+           <p style={styles.termsText}>
+             By signing up you agree to our{" "}
+-            <a href="#" style={styles.termsLink}>terms &amp; conditions</a>
++            <a href="/terms" style={styles.termsLink}>terms &amp; conditions</a>
+           </p>
+         </div>
+       </div>
+diff --git a/frontend/app/signup/page.tsx b/frontend/app/signup/page.tsx
+index ca9fc92..0ebf0bb 100644
+--- a/frontend/app/signup/page.tsx
++++ b/frontend/app/signup/page.tsx
+@@ -2,7 +2,7 @@
+ import Link from "next/link";
+ import { useState } from "react";
+ import { useRouter } from "next/navigation";
+-import { register } from "../../lib/api";
++import { register, setUserRole } from "../../lib/api";
+ 
+ export default function SignupPage() {
+   const router = useRouter();
+@@ -30,6 +30,7 @@ export default function SignupPage() {
+     setError("");
+     try {
+       await register(form.fullName, form.email, form.password);
++      setUserRole("user");
+       router.push("/login");
+     } catch (err: unknown) {
+       setError(err instanceof Error ? err.message : "Registration failed");
+diff --git a/frontend/lib/api.ts b/frontend/lib/api.ts
+index 8e0ab12..b4b1621 100644
+--- a/frontend/lib/api.ts
++++ b/frontend/lib/api.ts
+@@ -13,10 +13,22 @@ export const removeToken = () => {
+   localStorage.removeItem('token');
+   localStorage.removeItem('userName');
+   localStorage.removeItem('userEmail');
++  localStorage.removeItem('userRole');
+ };
+ 
+ export const isLoggedIn = () => !!getToken();
+ 
++export const setUserRole = (role: 'user' | 'organizer') => {
++  localStorage.setItem('userRole', role);
++};
++
++export const getUserRole = (): 'user' | 'organizer' => {
++  if (typeof window === 'undefined') return 'user';
++  return (localStorage.getItem('userRole') as 'user' | 'organizer') || 'user';
++};
++
++export const isOrganizer = () => getUserRole() === 'organizer';
++
+ export const getUserName = () => {
+   if (typeof window === 'undefined') return '';
+   return localStorage.getItem('userName') || '';

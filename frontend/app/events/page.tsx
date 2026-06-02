@@ -52,6 +52,22 @@ export default function EventsPage() {
 
       {/* Navbar */}
       <DarkNavbar />
+      {/* Navbar */}
+        <nav className="relative flex items-center justify-between px-8 py-4">
+          <span
+            className="text-2xl text-white italic"
+            style={{ fontFamily: "'Brush Script MT', cursive" }}
+          >
+            Bookify
+          </span>
+          <div className="flex items-center gap-7 text-[12px] text-white">
+            <span className="cursor-pointer">Home</span>
+            <span className="cursor-pointer">Event/Booking</span>
+            <span className="cursor-pointer">Blog</span>
+            <span className="cursor-pointer">Contact</span>
+            <span className="cursor-pointer">Profile</span>
+          </div>
+        </nav>
 
       {/* Page Header */}
       <div className="px-8 py-8 bg-gray-900 border-b border-gray-800">
@@ -91,10 +107,13 @@ export default function EventsPage() {
         <div className="flex flex-col gap-4">
           {displayedEvents.map((event) => (
             <div key={event.id} className="flex items-center gap-4 bg-gray-800 rounded-xl overflow-hidden border border-gray-700 hover:border-purple-500 transition-all">
-              <div className="w-36 h-24 flex-shrink-0 bg-purple-900/40 flex items-center justify-center">
-                <svg className="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                </svg>
+              
+              <div className="w-36 h-24 flex-shrink-0 overflow-hidden">
+                 <img
+                   src="/event-placeholder.jpg"
+                   alt={event.title}
+                   className="w-full h-full object-cover"
+                   />
               </div>
               <div className="flex-1 py-3 pr-2">
                 <p className="text-white text-sm font-semibold">{event.title}</p>
