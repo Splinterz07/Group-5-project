@@ -100,3 +100,20 @@ export const cancelBooking = async (id: number) => {
   if (!res.ok) throw new Error(data.message || 'Failed to cancel booking');
   return data;
 };
+
+export const createEvent = async (eventData: {
+  title: string;
+  description: string;
+  date: string;
+  location: string;
+  totalSeats: number;
+  price: number;
+}) => {
+  const res = await authFetch('/api/events', {
+    method: 'POST',
+    body: JSON.stringify(eventData),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || 'Failed to create event');
+  return data;
+};
