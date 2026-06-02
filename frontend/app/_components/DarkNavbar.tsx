@@ -22,9 +22,11 @@ export default function DarkNavbar() {
 
   return (
     <nav className="flex items-center justify-between px-8 py-4 bg-gray-950 border-b border-gray-800">
+      <Link href="/" className="hover:text-white transition-colors">
       <span className="text-lg font-bold italic" style={{ fontFamily: "'Dancing Script', cursive" }}>
         Bookify
       </span>
+      </Link>
       <div className="hidden md:flex items-center gap-8 text-sm text-gray-300">
         <Link href="/home" className="hover:text-white transition-colors">Home</Link>
         <Link href="/events" className="hover:text-white transition-colors">Event/Booking</Link>
