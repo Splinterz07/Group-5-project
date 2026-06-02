@@ -2,7 +2,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { fetchEvent, createBooking, isLoggedIn } from "../../../lib/api";
+import { fetchEvent, createBooking, isLoggedIn } from "@/lib/api";
+import DarkNavbar from "@/app/_components/DarkNavbar";
 
 interface Event {
   id: number;
@@ -64,26 +65,7 @@ export default function EventDetailPage() {
     <div className="min-h-screen bg-gray-950 text-white font-sans">
 
       {/* Navbar */}
-      <nav className="flex items-center justify-between px-8 py-4 bg-gray-950 border-b border-gray-800">
-        <span className="text-lg font-bold italic" style={{ fontFamily: "'Dancing Script', cursive" }}>
-          Bookify
-        </span>
-        <div className="hidden md:flex items-center gap-8 text-sm text-gray-300">
-          <Link href="/" className="hover:text-white transition-colors">Home</Link>
-          <Link href="/events" className="text-white">Event/Booking</Link>
-          <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
-          <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
-          <Link href="/profile" className="hover:text-white transition-colors">Profile</Link>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link href="/signup" className="px-4 py-1.5 border border-purple-500 text-white text-sm rounded hover:bg-purple-500/20 transition-all">
-            SIGN UP
-          </Link>
-          <Link href="/login" className="px-4 py-1.5 bg-purple-600 text-white text-sm rounded hover:bg-purple-700 transition-all">
-            LOG IN
-          </Link>
-        </div>
-      </nav>
+      <DarkNavbar />
 
       <div className="max-w-3xl mx-auto px-8 py-10">
 

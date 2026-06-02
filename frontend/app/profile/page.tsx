@@ -1,9 +1,9 @@
 "use client";
 import Link from "next/link";
-import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { fetchBookings, cancelBooking, isLoggedIn, removeToken } from "../../lib/api";
+import { fetchBookings, cancelBooking, isLoggedIn, removeToken, getUserName, getUserEmail } from "../../lib/api";
+import DarkNavbar from "@/app/_components/DarkNavbar";
 
 const TABS = ["Account Details", "My Bookings", "Payments"] as const;
 type Tab = (typeof TABS)[number];
@@ -17,6 +17,51 @@ interface Booking {
   createdAt: string;
 }
 
+interface SavedCard {
+  id: number;
+  label: string;
+  type: "visa" | "mastercard" | "other";
+}
+
+interface CardForm {
+  cardNumber: string;
+  expiry: string;
+  cvv: string;
+  cardName: string;
+}
+
+const VisaIcon = () => (
+  <svg viewBox="0 0 48 48" className="w-10 h-7" fill="none">
+    <rect width="48" height="48" rx="6" fill="#1A1F71"/>
+    <text x="50%" y="67%" dominantBaseline="middle" textAnchor="middle" fill="white" fontSize="18" fontWeight="bold" fontFamily="Arial">VISA</text>
+  </svg>
+);
+
+const MastercardIcon = () => (
+  <svg viewBox="0 0 48 48" className="w-10 h-7" fill="none">
+    <rect width="48" height="48" rx="6" fill="#252525"/>
+    <circle cx="19" cy="24" r="10" fill="#EB001B"/>
+    <circle cx="29" cy="24" r="10" fill="#F79E1B"/>
+    <path d="M24 16.8A10 10 0 0129 24a10 10 0 01-5 7.2A10 10 0 0119 24a10 10 0 015-7.2z" fill="#FF5F00"/>
+  </svg>
+);
+
+const GenericCardIcon = ({ color }: { color: string }) => (
+  <div className={`w-10 h-7 rounded ${color} flex items-center justify-center`}>
+    <svg className="w-6 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <rect x="2" y="5" width="20" height="14" rx="2" fill="none" stroke="white" strokeWidth="1.5"/>
+      <line x1="2" y1="10" x2="22" y2="10" stroke="white" strokeWidth="1.5"/>
+    </svg>
+  </div>
+);
+
+const detectCardType = (number: string): "visa" | "mastercard" | "other" => {
+  const clean = number.replace(/\s/g, "");
+  if (clean.startsWith("4")) return "visa";
+  if (clean.startsWith("5") || clean.startsWith("2")) return "mastercard";
+  return "other";
+};
+
 export default function ProfilePage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>("Account Details");
@@ -24,10 +69,31 @@ export default function ProfilePage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [bookingsLoading, setBookingsLoading] = useState(false);
   const [bookingsError, setBookingsError] = useState("");
+  const [showAddCard, setShowAddCard] = useState(false);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [imageUploadError, setImageUploadError] = useState("");
+  const [savedCards, setSavedCards] = useState<SavedCard[]>([
+    { id: 1, label: "Visa ending in 4242", type: "visa" },
+    { id: 2, label: "Mastercard ending in 8888", type: "mastercard" },
+  ]);
+  const [cardForm, setCardForm] = useState<CardForm>({
+    cardNumber: "",
+    expiry: "",
+    cvv: "",
+    cardName: "",
+  });
+
+  const userName = getUserName();
+  const userEmail = getUserEmail();
+  const initials = userName
+    ? userName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
+    : "??";
+
   const [form, setForm] = useState({
-    fullName: "Philemon Michael-Hussaini",
-    email: "philemon@example.com",
-    phone: "+234 800 000 0000",
+    fullName: userName,
+    email: userEmail,
+    phone: "",
     password: "",
   });
 
@@ -64,13 +130,93 @@ export default function ProfilePage() {
     }
   };
 
-  const handleLogout = () => {
-    removeToken();
-    router.push("/login");
-  };
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleCardFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value;
+    if (e.target.name === "cardNumber") {
+      value = value.replace(/\D/g, "").slice(0, 16).replace(/(.{4})/g, "$1 ").trim();
+    }
+    if (e.target.name === "expiry") {
+      value = value.replace(/\D/g, "").slice(0, 4);
+      if (value.length >= 2) value = value.slice(0, 2) + "/" + value.slice(2);
+    }
+    if (e.target.name === "cvv") {
+      value = value.replace(/\D/g, "").slice(0, 3);
+    }
+    setCardForm({ ...cardForm, [e.target.name]: value });
+  };
+
+  const handleAddCard = (e: React.FormEvent) => {
+    e.preventDefault();
+    const last4 = cardForm.cardNumber.replace(/\s/g, "").slice(-4);
+    const type = detectCardType(cardForm.cardNumber);
+    const typeLabel = type === "visa" ? "Visa" : type === "mastercard" ? "Mastercard" : "Card";
+    setSavedCards([...savedCards, {
+      id: savedCards.length + 1,
+      label: `${typeLabel} ending in ${last4}`,
+      type,
+    }]);
+    setCardForm({ cardNumber: "", expiry: "", cvv: "", cardName: "" });
+    setShowAddCard(false);
+  };
+
+  const handleRemoveCard = (id: number) => {
+    setSavedCards(savedCards.filter((c) => c.id !== id));
+  };
+
+  const handleProfileImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      setImageUploadError("Please select a valid image file");
+      setTimeout(() => setImageUploadError(""), 3000);
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setImageUploadError("File size must be less than 5MB");
+      setTimeout(() => setImageUploadError(""), 3000);
+      return;
+    }
+
+    setIsUploadingImage(true);
+    setImageUploadError("");
+
+    try {
+      // Create a FileReader to convert the file to base64
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const base64String = event.target?.result as string;
+        setProfileImage(base64String);
+        setIsUploadingImage(false);
+        // Reset the input value so the same file can be selected again
+        e.target.value = "";
+        // Optionally: Send to backend API here
+        // await updateProfileImage(base64String);
+      };
+      reader.onerror = () => {
+        setImageUploadError("Failed to read file");
+        setIsUploadingImage(false);
+        setTimeout(() => setImageUploadError(""), 3000);
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : "Failed to upload image";
+      setImageUploadError(errorMsg);
+      setIsUploadingImage(false);
+      setTimeout(() => setImageUploadError(""), 3000);
+    }
+  };
+
+  const handleRemoveProfileImage = () => {
+    setProfileImage(null);
+    setImageUploadError("");
   };
 
   return (
@@ -82,26 +228,9 @@ export default function ProfilePage() {
       <div className="absolute inset-0 bg-black/55" />
 
       {/* Navbar */}
-      <nav className="relative z-10 flex items-center justify-between px-10 py-5">
-        <span className="text-white text-2xl" style={{ fontFamily: "'Dancing Script', cursive", fontWeight: 700 }}>
-          Bookify
-        </span>
-        <div className="hidden md:flex items-center gap-8 text-white text-sm font-medium">
-          <Link href="/" className="hover:text-purple-300 transition-colors">Home</Link>
-          <Link href="/events" className="hover:text-purple-300 transition-colors">Event/Booking</Link>
-          <Link href="/blog" className="hover:text-purple-300 transition-colors">Blog</Link>
-          <Link href="/contact" className="hover:text-purple-300 transition-colors">Contact</Link>
-          <Link href="/profile" className="text-purple-300">Profile</Link>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleLogout}
-            className="px-5 py-2 rounded-full border border-red-400 text-white text-sm hover:bg-red-400/20 transition-all"
-          >
-            LOG OUT
-          </button>
-        </div>
-      </nav>
+      <div className="relative z-10">
+        <DarkNavbar />
+      </div>
 
       {/* Profile Card */}
       <div className="relative z-10 flex flex-1 items-start justify-center px-4 py-10">
@@ -109,17 +238,63 @@ export default function ProfilePage() {
 
           {/* Avatar + Name */}
           <div className="flex flex-col items-center pt-10 pb-6">
-            <div className="w-24 h-24 rounded-full border-4 border-purple-400 overflow-hidden mb-3 shadow-lg">
-              <Image
-                src="/bookify icon.jpg"
-                alt="Profile"
-                width={96}
-                height={96}
-                className="object-cover w-full h-full"
-              />
+            <div className="relative group">
+              {profileImage ? (
+                <img
+                  src={profileImage}
+                  alt="Profile"
+                  className="w-24 h-24 rounded-full border-4 border-purple-400 object-cover shadow-lg"
+                />
+              ) : (
+                <div className="w-24 h-24 rounded-full border-4 border-purple-400 bg-purple-700 flex items-center justify-center shadow-lg">
+                  <span className="text-white text-3xl font-bold">{initials}</span>
+                </div>
+              )}
+              
+              {/* Hover overlay with change button */}
+              <div className="absolute inset-0 rounded-full bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <label htmlFor="profile-image-input" className="cursor-pointer flex flex-col items-center gap-1">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span className="text-white text-xs font-semibold">Change</span>
+                </label>
+                <input
+                  id="profile-image-input"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProfileImageChange}
+                  disabled={isUploadingImage}
+                  className="hidden"
+                />
+              </div>
+
+              {/* Loading indicator */}
+              {isUploadingImage && (
+                <div className="absolute inset-0 rounded-full bg-black/60 flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-purple-400 border-t-white rounded-full animate-spin" />
+                </div>
+              )}
             </div>
-            <h2 className="text-white text-xl font-bold">{form.fullName}</h2>
-            <p className="text-purple-200 text-sm mt-1">Gen Z Ambassador</p>
+
+            {/* Error message */}
+            {imageUploadError && (
+              <p className="text-red-300 text-xs mt-3">{imageUploadError}</p>
+            )}
+
+            {/* Remove button - only show if image is uploaded */}
+            {profileImage && !isUploadingImage && (
+              <button
+                onClick={handleRemoveProfileImage}
+                className="mt-2 text-red-300 hover:text-red-200 text-xs transition-colors underline"
+              >
+                Remove Photo
+              </button>
+            )}
+
+            <h2 className="text-white text-xl font-bold mt-3">{userName || "User"}</h2>
+            <p className="text-purple-200 text-sm mt-1">{userEmail}</p>
           </div>
 
           {/* Tabs */}
@@ -149,56 +324,32 @@ export default function ProfilePage() {
                   <svg className="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                   </svg>
-                  <input
-                    type="text"
-                    name="fullName"
-                    value={form.fullName}
-                    onChange={handleChange}
-                    className="bg-transparent flex-1 text-gray-700 text-sm outline-none placeholder-gray-500"
-                    placeholder="Full Name"
-                  />
+                  <input type="text" name="fullName" value={form.fullName} onChange={handleChange}
+                    className="bg-transparent flex-1 text-gray-700 text-sm outline-none placeholder-gray-500" placeholder="Full Name"/>
                 </div>
 
                 <div className="flex items-center gap-3 bg-white/80 rounded-lg px-4 py-3">
                   <svg className="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                   </svg>
-                  <input
-                    type="email"
-                    name="email"
-                    value={form.email}
-                    onChange={handleChange}
-                    className="bg-transparent flex-1 text-gray-700 text-sm outline-none placeholder-gray-500"
-                    placeholder="Email Address"
-                  />
+                  <input type="email" name="email" value={form.email} onChange={handleChange}
+                    className="bg-transparent flex-1 text-gray-700 text-sm outline-none placeholder-gray-500" placeholder="Email Address"/>
                 </div>
 
                 <div className="flex items-center gap-3 bg-white/80 rounded-lg px-4 py-3">
                   <svg className="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
                   </svg>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={form.phone}
-                    onChange={handleChange}
-                    className="bg-transparent flex-1 text-gray-700 text-sm outline-none placeholder-gray-500"
-                    placeholder="Phone Number"
-                  />
+                  <input type="tel" name="phone" value={form.phone} onChange={handleChange}
+                    className="bg-transparent flex-1 text-gray-700 text-sm outline-none placeholder-gray-500" placeholder="Phone Number"/>
                 </div>
 
                 <div className="flex items-center gap-3 bg-white/80 rounded-lg px-4 py-3">
                   <svg className="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                   </svg>
-                  <input
-                    type="password"
-                    name="password"
-                    value={form.password}
-                    onChange={handleChange}
-                    className="bg-transparent flex-1 text-gray-700 text-sm outline-none placeholder-gray-500"
-                    placeholder="New Password"
-                  />
+                  <input type="password" name="password" value={form.password} onChange={handleChange}
+                    className="bg-transparent flex-1 text-gray-700 text-sm outline-none placeholder-gray-500" placeholder="New Password"/>
                 </div>
 
                 <div className="flex items-center justify-between bg-white/10 rounded-lg px-4 py-3">
@@ -212,13 +363,11 @@ export default function ProfilePage() {
                       cursor: "pointer", padding: 0,
                     }}
                   >
-                    <span
-                      style={{
-                        position: "absolute", top: "3px", left: notifications ? "23px" : "3px",
-                        width: "18px", height: "18px", backgroundColor: "white", borderRadius: "50%",
-                        transition: "left 0.3s", boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
-                      }}
-                    />
+                    <span style={{
+                      position: "absolute", top: "3px", left: notifications ? "23px" : "3px",
+                      width: "18px", height: "18px", backgroundColor: "white", borderRadius: "50%",
+                      transition: "left 0.3s", boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+                    }}/>
                   </button>
                 </div>
 
@@ -232,9 +381,7 @@ export default function ProfilePage() {
             {activeTab === "My Bookings" && (
               <div>
                 {bookingsLoading && <p className="text-white/70 text-sm">Loading bookings...</p>}
-                {bookingsError && (
-                  <p className="text-red-300 text-sm">{bookingsError}</p>
-                )}
+                {bookingsError && <p className="text-red-300 text-sm">{bookingsError}</p>}
                 {!bookingsLoading && !bookingsError && bookings.length === 0 && (
                   <div className="text-center py-8">
                     <p className="text-white/60 text-sm">No bookings yet.</p>
@@ -245,12 +392,16 @@ export default function ProfilePage() {
                 )}
                 <div className="space-y-4">
                   {bookings.map((booking) => (
-                    <div key={booking.id} className="flex items-center gap-4 bg-white/10 rounded-xl overflow-hidden border border-white/15 px-4 py-3">
+                    <div key={booking.id} className="flex items-center gap-4 bg-white/10 rounded-xl border border-white/15 px-4 py-3">
+                      <div className="w-10 h-10 rounded-full bg-purple-700 flex items-center justify-center flex-shrink-0">
+                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/>
+                        </svg>
+                      </div>
                       <div className="flex-1">
                         <p className="text-white text-sm font-semibold">Booking #{booking.id}</p>
-                        <p className="text-white/60 text-xs mt-1">Event ID: {booking.eventId}</p>
-                        <p className="text-white/60 text-xs">{booking.seats} seat(s) • {booking.email}</p>
-                        <p className="text-white/40 text-xs mt-1">{new Date(booking.createdAt).toLocaleDateString()}</p>
+                        <p className="text-white/60 text-xs mt-0.5">Event ID: {booking.eventId} • {booking.seats} seat(s)</p>
+                        <p className="text-white/40 text-xs">{new Date(booking.createdAt).toLocaleDateString()}</p>
                       </div>
                       <button
                         onClick={() => handleCancelBooking(booking.id)}
@@ -266,25 +417,88 @@ export default function ProfilePage() {
 
             {/* Payments */}
             {activeTab === "Payments" && (
-              <div className="space-y-4 max-w-sm mx-auto">
-                {[
-                  { label: "Saved Card 1", color: "bg-blue-500" },
-                  { label: "Saved Card 2", color: "bg-red-500" },
-                  { label: "Saved Card 3", color: "bg-blue-700" },
-                ].map((card) => (
-                  <div key={card.label} className="flex items-center gap-4 bg-white/10 border border-white/20 rounded-xl px-5 py-4">
-                    <div className={`w-10 h-7 rounded ${card.color} flex items-center justify-center`}>
-                      <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                        <rect x="2" y="5" width="20" height="14" rx="2" fill="none" stroke="white" strokeWidth="1.5"/>
-                        <line x1="2" y1="10" x2="22" y2="10" stroke="white" strokeWidth="1.5"/>
-                      </svg>
+              <div className="max-w-sm mx-auto space-y-4">
+                {savedCards.map((card) => (
+                  <div key={card.id} className="flex items-center gap-4 bg-white/10 border border-white/20 rounded-xl px-5 py-4">
+                    <div className="flex-shrink-0">
+                      {card.type === "visa" && <VisaIcon />}
+                      {card.type === "mastercard" && <MastercardIcon />}
+                      {card.type === "other" && <GenericCardIcon color="bg-purple-600" />}
                     </div>
                     <span className="flex-1 text-white text-sm font-medium">{card.label}</span>
-                    <button className="px-4 py-1.5 border border-white/40 text-white text-xs rounded-lg hover:bg-white/10 transition-all">
-                      Manage
+                    <button
+                      onClick={() => handleRemoveCard(card.id)}
+                      className="px-3 py-1.5 border border-red-400/50 text-red-300 text-xs rounded-lg hover:bg-red-400/20 transition-all"
+                    >
+                      Remove
                     </button>
                   </div>
                 ))}
+
+                {!showAddCard && (
+                  <button
+                    onClick={() => setShowAddCard(true)}
+                    className="w-full py-3 border-2 border-dashed border-white/30 text-white/60 hover:border-purple-400 hover:text-purple-300 rounded-xl text-sm font-semibold transition-all"
+                  >
+                    + Add New Card
+                  </button>
+                )}
+
+                {showAddCard && (
+                  <form onSubmit={handleAddCard} className="bg-white/10 border border-white/20 rounded-xl p-5 space-y-3">
+                    <h3 className="text-white text-sm font-bold mb-2">Add New Card</h3>
+
+                    <input
+                      type="text"
+                      name="cardName"
+                      placeholder="Name on Card"
+                      value={cardForm.cardName}
+                      onChange={handleCardFormChange}
+                      required
+                      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white text-sm outline-none placeholder-white/40 focus:border-purple-400"
+                    />
+
+                    <input
+                      type="text"
+                      name="cardNumber"
+                      placeholder="Card Number"
+                      value={cardForm.cardNumber}
+                      onChange={handleCardFormChange}
+                      required
+                      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white text-sm outline-none placeholder-white/40 focus:border-purple-400"
+                    />
+
+                    <div className="flex gap-3 overflow-hidden">
+                      <input
+                        type="text"
+                        name="expiry"
+                        placeholder="MM/YY"
+                        value={cardForm.expiry}
+                        onChange={handleCardFormChange}
+                        required
+                        className="w-1/2 bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white text-sm outline-none placeholder-white/40 focus:border-purple-400"
+                      />
+                      <input
+                        type="text"
+                        name="cvv"
+                        placeholder="CVV"
+                        value={cardForm.cvv}
+                        onChange={handleCardFormChange}
+                        required
+                        className="w-1/2 bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white text-sm outline-none placeholder-white/40 focus:border-purple-400"
+                      />
+                    </div>
+
+                    <div className="flex gap-3 pt-1">
+                      <button type="submit" className="flex-1 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold rounded-lg transition-all">
+                        Save Card
+                      </button>
+                      <button type="button" onClick={() => setShowAddCard(false)} className="flex-1 py-2.5 border border-white/30 text-white/70 text-sm rounded-lg hover:bg-white/10 transition-all">
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                )}
               </div>
             )}
           </div>

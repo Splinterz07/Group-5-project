@@ -1,36 +1,52 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
+import Navbar from "@/app/_components/Navbar";
+import SearchEvent from "@/app/_components/SearchEvents";
+import Footer from "@/app/_components/Footer";
 
 export default function LandingPage() {
   const [email, setEmail] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+
+  const handleSearchComplete = (query: string, results: any[]) => {
+    if (query.trim()) {
+      setSearchResults(results);
+      setShowSearchResults(results.length > 0);
+    } else {
+      setShowSearchResults(false);
+      setSearchResults([]);
+    }
+  };
+
+  const handleViewEvent = (eventId: number) => {
+    window.location.href = `/events/${eventId}`;
+  };
+
+  const handleSubscribeNewsletter = async (subscriberEmail: string) => {
+    try {
+      // TODO: Replace with actual API call to your backend
+      // const response = await fetch('/api/subscribe', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ email: subscriberEmail })
+      // });
+      // if (!response.ok) throw new Error('Failed to subscribe');
+      
+      // For now, just simulate success
+      console.log("Subscribed:", subscriberEmail);
+    } catch (error) {
+      throw new Error("Failed to subscribe to newsletter");
+    }
+  };
 
   return (
     <div className="min-h-screen font-sans">
+      
       {/* ── NAVBAR ── */}
-      <nav className="flex items-center justify-between px-8 py-4 bg-white shadow-sm">
-        <div>
-          <span className="text-xl font-bold italic" style={{ fontFamily: "'Dancing Script', cursive" }}>
-            Bookify
-          </span>
-          <p className="text-xs text-gray-500">Discover. Book. Experience.</p>
-        </div>
-        <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-700">
-          <Link href="/" className="hover:text-purple-600 transition-colors">Home</Link>
-          <Link href="/events" className="hover:text-purple-600 transition-colors">Event/Booking</Link>
-          <Link href="/blog" className="hover:text-purple-600 transition-colors">Blog</Link>
-          <Link href="/contact" className="hover:text-purple-600 transition-colors">Contact</Link>
-          <Link href="/profile" className="hover:text-purple-600 transition-colors">Profile</Link>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link href="/login" className="text-sm font-medium text-gray-700 hover:text-purple-600 transition-colors">
-            Log In
-          </Link>
-          <Link href="/signup" className="px-4 py-2 bg-purple-600 text-white text-sm font-semibold rounded-full hover:bg-purple-700 transition-all">
-            SIGN UP
-          </Link>
-        </div>
-      </nav>
+      <Navbar />
+
 
       {/* ── HERO ── */}
       <section className="relative h-[380px] flex items-center justify-center overflow-hidden">
@@ -41,11 +57,29 @@ export default function LandingPage() {
           <h1 className="text-white text-3xl md:text-4xl font-bold tracking-widest uppercase leading-tight" style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic" }}>
             Find Your Next Experience
           </h1>
-          <div className="flex items-center gap-2 bg-white rounded-full px-4 py-2.5 w-full max-w-sm shadow mt-2">
-            <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input type="text" placeholder="search event" className="bg-transparent flex-1 text-sm text-gray-600 outline-none placeholder-gray-400" />
+          <div className="relative w-full max-w-sm mt-2">
+            <SearchEvent
+              placeholder="search event"
+              variant="light"
+              rounded="full"
+              onSearchComplete={handleSearchComplete}
+            />
+            
+            {/* Search Results Dropdown */}
+            {showSearchResults && searchResults.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 max-h-80 overflow-y-auto z-50">
+                {searchResults.map((event) => (
+                  <button
+                    key={event.id}
+                    onClick={() => handleViewEvent(event.id)}
+                    className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors"
+                  >
+                    <p className="font-semibold text-gray-900">{event.title}</p>
+                    <p className="text-sm text-gray-600">{event.location}</p>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -107,52 +141,13 @@ export default function LandingPage() {
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="bg-white border-t border-gray-200 px-8 pt-12 pb-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 pb-10 border-b border-gray-200">
-            <div>
-              <span className="text-lg font-bold italic" style={{ fontFamily: "'Dancing Script', cursive" }}>Bookify.com</span>
-              <p className="text-gray-500 text-sm mt-1 mb-4 leading-relaxed">A ticketing platform for making memorable experience.</p>
-              <div className="flex gap-2">
-                <input
-                  type="email"
-                  placeholder="Your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded text-sm outline-none focus:border-purple-400"
-                />
-                <button className="px-4 py-2 bg-gray-200 text-gray-700 text-sm rounded hover:bg-purple-600 hover:text-white transition-all font-medium">
-                  Subscribe
-                </button>
-              </div>
-            </div>
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-4">Company</h4>
-              <ul className="space-y-2 text-sm text-gray-500">
-                <li><Link href="/" className="hover:text-purple-600 transition-colors">Homepage</Link></li>
-                <li><Link href="/about" className="hover:text-purple-600 transition-colors">About Us</Link></li>
-                <li><Link href="/how-it-works" className="hover:text-purple-600 transition-colors">How Bookify works</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-4">Follow us</h4>
-              <ul className="space-y-2 text-sm text-gray-500">
-                <li><a href="#" className="hover:text-purple-600 transition-colors">Facebook</a></li>
-                <li><a href="#" className="hover:text-purple-600 transition-colors">Instagram</a></li>
-                <li><a href="#" className="hover:text-purple-600 transition-colors">Tiktok</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-gray-400">
-            <p>Copyright 2026 . All rights reserved.</p>
-            <div className="flex items-center gap-6">
-              <Link href="/terms" className="hover:text-gray-600 transition-colors">Terms & Conditions</Link>
-              <Link href="/privacy" className="hover:text-gray-600 transition-colors">Privacy policy</Link>
-              <Link href="/refund" className="hover:text-gray-600 transition-colors">Refund Policy</Link>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer 
+        email={email}
+        onEmailChange={setEmail}
+        onSubscribe={handleSubscribeNewsletter}
+        showSubscribe={true}
+        variant="light"
+      />
     </div>
   );
 }

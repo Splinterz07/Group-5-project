@@ -1,6 +1,15 @@
 import { Response } from 'express';
-import prisma from '../lib/prisma';
 import { AuthRequest } from '../middleware/auth';
+import prisma from '../lib/prisma';
+
+export const getAllBookings = async (req: AuthRequest, res: Response) => {
+  try {
+    const bookings = await prisma.booking.findMany();
+    res.json(bookings);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch bookings' });
+  }
+};
 
 export const getMyBookings = async (req: AuthRequest, res: Response) => {
   try {
@@ -32,7 +41,13 @@ export const createBooking = async (req: AuthRequest, res: Response) => {
     }
 
     const booking = await prisma.booking.create({
-      data: { eventId: Number(eventId), name, email, seats: Number(seats), userId: req.userId }
+      data: {
+        eventId: Number(eventId),
+        name,
+        email,
+        seats: Number(seats),
+        userId: req.userId
+      }
     });
 
     await prisma.event.update({

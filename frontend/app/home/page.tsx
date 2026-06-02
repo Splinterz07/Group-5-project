@@ -3,21 +3,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { fetchEvents } from "../../lib/api";
-
-const featuredEvents = [
-  {
-    id: 1,
-    image: "/home image2.jpg",
-    title: "She Creates",
-    subtitle: "Female creatives, innovators and disruptors",
-    date: "Sunday, March 29th 2026",
-    location: "Popcental Hauz",
-    tag: "TiMA",
-  },
-  { id: 2, image: "/home image3.jpg", title: "Spider-Man", subtitle: "", date: "", location: "", tag: "" },
-  { id: 3, image: "/home image4.jpg", title: "Event 3", subtitle: "", date: "", location: "", tag: "" },
-  { id: 4, image: "/home image5.jpg", title: "Sports Event", subtitle: "", date: "", location: "", tag: "" },
-];
+import DarkNavbar from "@/app/_components/DarkNavbar";
+import SearchEvent from "@/app/_components/SearchEvents";
 
 interface Event {
   id: number;
@@ -33,13 +20,19 @@ interface Event {
 export default function HomePage() {
   const [email, setEmail] = useState("");
   const [events, setEvents] = useState<Event[]>([]);
+  const [sortedEvents, setSortedEvents] = useState<Event[]>([]);
+  const [displayedEvents, setDisplayedEvents] = useState<Event[]>([]);
   const [eventsLoading, setEventsLoading] = useState(true);
+  const [activeSort, setActiveSort] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const loadEvents = async () => {
       try {
         const data = await fetchEvents();
         setEvents(data);
+        setSortedEvents(data);
+        setDisplayedEvents(data);
       } catch (err) {
         console.error("Failed to load events", err);
       } finally {
@@ -49,37 +42,64 @@ export default function HomePage() {
     loadEvents();
   }, []);
 
+  const handleSearchComplete = (query: string, results: any[]) => {
+    setSearchQuery(query);
+    setActiveSort(null); // Clear sort when searching
+    
+    if (query.trim()) {
+      setDisplayedEvents(results);
+      setSortedEvents(results);
+    } else {
+      setDisplayedEvents(events);
+      setSortedEvents(events);
+    }
+  };
+
+  const handleSort = (type: string) => {
+    setActiveSort(type);
+    // If searching, use sortedEvents, otherwise use events
+    const sourceEvents = searchQuery ? displayedEvents : events;
+    const copy = [...sourceEvents];
+    if (type === "Price") {
+      copy.sort((a, b) => a.price - b.price);
+    } else if (type === "Location") {
+      copy.sort((a, b) => a.location.localeCompare(b.location));
+    } else if (type === "Ratings") {
+      copy.sort((a, b) => b.availableSeats - a.availableSeats);
+    }
+    setSortedEvents(copy);
+    setDisplayedEvents(copy);
+  };
+
   return (
     <div className="min-h-screen bg-gray-950 text-white font-sans">
 
       {/* ── NAVBAR ── */}
-      <nav className="flex items-center justify-between px-8 py-4 bg-gray-950 border-b border-gray-800">
-        <span className="text-lg font-bold italic" style={{ fontFamily: "'Dancing Script', cursive" }}>
-          Bookify
-        </span>
-        <div className="hidden md:flex items-center gap-8 text-sm text-gray-300">
-          <Link href="/" className="hover:text-white transition-colors">Home</Link>
-          <Link href="/events" className="hover:text-white transition-colors">Event/Booking</Link>
-          <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
-          <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
-          <Link href="/profile" className="hover:text-white transition-colors">Profile</Link>
+      <DarkNavbar />
+
+      {/* ── SEARCH BAR ── */}
+      <div className="px-8 py-6 bg-gray-900 border-b border-gray-800">
+        <div className="max-w-3xl">
+          <SearchEvent
+            placeholder="Search events by title, location..."
+            variant="dark"
+            onSearchComplete={handleSearchComplete}
+          />
         </div>
-        <div className="flex items-center gap-3">
-          <Link href="/signup" className="px-4 py-1.5 border border-purple-500 text-white text-sm rounded hover:bg-purple-500/20 transition-all">
-            SIGN UP
-          </Link>
-          <Link href="/login" className="px-4 py-1.5 bg-purple-600 text-white text-sm rounded hover:bg-purple-700 transition-all">
-            LOG IN
-          </Link>
-        </div>
-      </nav>
+      </div>
 
       {/* ── SORT BAR ── */}
       <div className="px-8 py-3 bg-gray-950 flex items-center gap-6 text-sm text-gray-400 border-b border-gray-800">
         <span>Sort by:</span>
-        <button className="hover:text-white transition-colors">Location</button>
-        <button className="hover:text-white transition-colors">Price</button>
-        <button className="hover:text-white transition-colors">Ratings</button>
+        {["Location", "Price", "Ratings"].map((type) => (
+          <button
+            key={type}
+            onClick={() => handleSort(type)}
+            className={`hover:text-white transition-colors ${activeSort === type ? "text-purple-400 font-semibold" : ""}`}
+          >
+            {type}
+          </button>
+        ))}
       </div>
 
       {/* ── FEATURED BANNER ── */}
@@ -110,13 +130,18 @@ export default function HomePage() {
 
       {/* ── EVENTS FOR YOU ── */}
       <section className="px-8 py-8 bg-gray-900 mt-2">
-        <h2 className="text-base font-semibold text-white mb-5">Events for you</h2>
+        <h2 className="text-base font-semibold text-white mb-5">
+          {searchQuery ? `Search Results for "${searchQuery}"` : "Events for you"}
+        </h2>
         <div className="flex flex-col gap-4">
           {eventsLoading && <p className="text-gray-400 text-sm">Loading events...</p>}
           {!eventsLoading && events.length === 0 && (
             <p className="text-gray-400 text-sm">No events available at the moment.</p>
           )}
-          {events.map((event) => (
+          {!eventsLoading && events.length > 0 && displayedEvents.length === 0 && searchQuery && (
+            <p className="text-gray-400 text-sm">No events found matching "{searchQuery}"</p>
+          )}
+          {sortedEvents.map((event) => (
             <div key={event.id} className="flex items-center gap-4 bg-gray-800 rounded-xl overflow-hidden border border-gray-700 hover:border-purple-500 transition-all">
               <div className="w-36 h-24 flex-shrink-0 bg-purple-900/40 flex items-center justify-center">
                 <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

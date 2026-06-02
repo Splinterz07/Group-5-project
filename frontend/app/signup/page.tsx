@@ -1,8 +1,9 @@
 "use client";
 import Link from "next/link";
+import DarkNavbar from "@/app/_components/DarkNavbar";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { register } from "../../lib/api";
+import { register, setUserRole } from "../../lib/api";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -30,6 +31,7 @@ export default function SignupPage() {
     setError("");
     try {
       await register(form.fullName, form.email, form.password);
+      setUserRole("user");
       router.push("/login");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Registration failed");
@@ -46,27 +48,7 @@ export default function SignupPage() {
       />
       <div className="absolute inset-0 bg-black/50" />
 
-      <nav className="relative z-10 flex items-center justify-between px-10 py-5">
-        <span className="text-white text-2xl" style={{ fontFamily: "'Dancing Script', cursive", fontWeight: 700 }}>
-          Bookify
-        </span>
-        <div className="hidden md:flex items-center gap-8 text-white text-sm font-medium">
-          <Link href="/" className="hover:text-purple-300 transition-colors">Home</Link>
-          <Link href="/events" className="hover:text-purple-300 transition-colors">Event/Booking</Link>
-          <Link href="/blog" className="hover:text-purple-300 transition-colors">Blog</Link>
-          <Link href="/contact" className="hover:text-purple-300 transition-colors">Contact</Link>
-          <Link href="/profile" className="hover:text-purple-300 transition-colors">Profile</Link>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link href="/signup" className="px-5 py-2 rounded-full border border-purple-400 text-white text-sm hover:bg-purple-400/20 transition-all">
-            SIGN UP
-          </Link>
-          <Link href="/login" className="px-5 py-2 rounded-full bg-purple-600 text-white text-sm hover:bg-purple-700 transition-all">
-            LOG IN
-          </Link>
-        </div>
-      </nav>
-
+      <DarkNavbar />
       <div className="relative z-10 flex flex-1 items-center justify-center px-4 py-12">
         <div className="w-full max-w-md bg-white/20 backdrop-blur-md border border-white/30 rounded-2xl p-10 shadow-2xl">
           <h1

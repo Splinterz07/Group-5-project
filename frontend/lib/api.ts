@@ -11,9 +11,33 @@ export const setToken = (token: string) => {
 
 export const removeToken = () => {
   localStorage.removeItem('token');
+  localStorage.removeItem('userName');
+  localStorage.removeItem('userEmail');
+  localStorage.removeItem('userRole');
 };
 
 export const isLoggedIn = () => !!getToken();
+
+export const setUserRole = (role: 'user' | 'organizer') => {
+  localStorage.setItem('userRole', role);
+};
+
+export const getUserRole = (): 'user' | 'organizer' => {
+  if (typeof window === 'undefined') return 'user';
+  return (localStorage.getItem('userRole') as 'user' | 'organizer') || 'user';
+};
+
+export const isOrganizer = () => getUserRole() === 'organizer';
+
+export const getUserName = () => {
+  if (typeof window === 'undefined') return '';
+  return localStorage.getItem('userName') || '';
+};
+
+export const getUserEmail = () => {
+  if (typeof window === 'undefined') return '';
+  return localStorage.getItem('userEmail') || '';
+};
 
 export const authFetch = async (path: string, options: RequestInit = {}) => {
   const token = getToken();
@@ -36,6 +60,8 @@ export const login = async (email: string, password: string) => {
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || 'Login failed');
   setToken(data.token);
+  localStorage.setItem('userName', data.name);
+  localStorage.setItem('userEmail', email);
   return data;
 };
 
@@ -53,6 +79,13 @@ export const fetchEvents = async () => {
   const res = await authFetch('/api/events');
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || 'Failed to fetch events');
+  return data;
+};
+
+export const searchEvents = async (query: string) => {
+  const res = await authFetch(`/api/events?search=${encodeURIComponent(query)}`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || 'Failed to search events');
   return data;
 };
 
@@ -84,5 +117,22 @@ export const cancelBooking = async (id: number) => {
   const res = await authFetch(`/api/bookings/${id}`, { method: 'DELETE' });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || 'Failed to cancel booking');
+  return data;
+};
+
+export const createEvent = async (eventData: {
+  title: string;
+  description: string;
+  date: string;
+  location: string;
+  totalSeats: number;
+  price: number;
+}) => {
+  const res = await authFetch('/api/events', {
+    method: 'POST',
+    body: JSON.stringify(eventData),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || 'Failed to create event');
   return data;
 };
