@@ -1,9 +1,6 @@
+"use client";
 import { useState } from "react";
 
-const fontLink = document.createElement("link");
-fontLink.rel = "stylesheet";
-fontLink.href = "https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Raleway:wght@300;400;600;700&display=swap";
-document.head.appendChild(fontLink);
 
 const posts = [
   {

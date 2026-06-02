@@ -1,10 +1,7 @@
+"use client";
 import { useState } from "react";
 
 // Cursive font for the Bookify logo
-const fontLink = document.createElement("link");
-fontLink.rel = "stylesheet";
-fontLink.href = "https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap";
-document.head.appendChild(fontLink);
 
 export default function BookifyRegister() {
   const [form, setForm] = useState({
