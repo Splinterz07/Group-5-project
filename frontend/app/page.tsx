@@ -24,6 +24,23 @@ export default function LandingPage() {
     window.location.href = `/events/${eventId}`;
   };
 
+  const handleSubscribeNewsletter = async (subscriberEmail: string) => {
+    try {
+      // TODO: Replace with actual API call to your backend
+      // const response = await fetch('/api/subscribe', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ email: subscriberEmail })
+      // });
+      // if (!response.ok) throw new Error('Failed to subscribe');
+      
+      // For now, just simulate success
+      console.log("Subscribed:", subscriberEmail);
+    } catch (error) {
+      throw new Error("Failed to subscribe to newsletter");
+    }
+  };
+
   return (
     <div className="min-h-screen font-sans">
       
@@ -127,6 +144,7 @@ export default function LandingPage() {
       <Footer 
         email={email}
         onEmailChange={setEmail}
+        onSubscribe={handleSubscribeNewsletter}
         showSubscribe={true}
         variant="light"
       />

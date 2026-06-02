@@ -174,12 +174,14 @@ export default function ProfilePage() {
     // Validate file type
     if (!file.type.startsWith("image/")) {
       setImageUploadError("Please select a valid image file");
+      setTimeout(() => setImageUploadError(""), 3000);
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       setImageUploadError("File size must be less than 5MB");
+      setTimeout(() => setImageUploadError(""), 3000);
       return;
     }
 
@@ -193,17 +195,22 @@ export default function ProfilePage() {
         const base64String = event.target?.result as string;
         setProfileImage(base64String);
         setIsUploadingImage(false);
+        // Reset the input value so the same file can be selected again
+        e.target.value = "";
         // Optionally: Send to backend API here
         // await updateProfileImage(base64String);
       };
       reader.onerror = () => {
         setImageUploadError("Failed to read file");
         setIsUploadingImage(false);
+        setTimeout(() => setImageUploadError(""), 3000);
       };
       reader.readAsDataURL(file);
     } catch (err) {
-      setImageUploadError(err instanceof Error ? err.message : "Failed to upload image");
+      const errorMsg = err instanceof Error ? err.message : "Failed to upload image";
+      setImageUploadError(errorMsg);
       setIsUploadingImage(false);
+      setTimeout(() => setImageUploadError(""), 3000);
     }
   };
 
