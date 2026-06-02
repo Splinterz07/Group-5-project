@@ -5,7 +5,7 @@ import Navbar from "@/app/_components/Navbar";
 import Footer from "@/app/_components/Footer";
 
 export default function TermsPage() {
-  const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 
   const sections = [
     {
@@ -101,18 +101,22 @@ export default function TermsPage() {
               <details
                 key={section.id}
                 className="bg-gray-50 border border-gray-200 rounded-lg overflow-hidden hover:border-purple-300 transition-colors"
-                open={expandedSection === section.id}
-                onToggle={() =>
-                  setExpandedSection(
-                    expandedSection === section.id ? null : section.id
-                  )
-                }
+                open={expandedSections.has(section.id)}
+                onToggle={(e) => {
+                  const newExpanded = new Set(expandedSections);
+                  if (e.currentTarget.open) {
+                    newExpanded.add(section.id);
+                  } else {
+                    newExpanded.delete(section.id);
+                  }
+                  setExpandedSections(newExpanded);
+                }}
               >
                 <summary className="flex items-center justify-between p-6 cursor-pointer font-semibold text-gray-900 hover:bg-purple-50 transition-colors">
                   <span>{section.title}</span>
                   <svg
                     className={`w-5 h-5 text-purple-600 transition-transform ${
-                      expandedSection === section.id ? "rotate-180" : ""
+                      expandedSections.has(section.id) ? "rotate-180" : ""
                     }`}
                     fill="none"
                     stroke="currentColor"

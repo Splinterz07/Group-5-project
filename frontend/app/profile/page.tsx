@@ -70,6 +70,9 @@ export default function ProfilePage() {
   const [bookingsLoading, setBookingsLoading] = useState(false);
   const [bookingsError, setBookingsError] = useState("");
   const [showAddCard, setShowAddCard] = useState(false);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [imageUploadError, setImageUploadError] = useState("");
   const [savedCards, setSavedCards] = useState<SavedCard[]>([
     { id: 1, label: "Visa ending in 4242", type: "visa" },
     { id: 2, label: "Mastercard ending in 8888", type: "mastercard" },
@@ -164,6 +167,51 @@ export default function ProfilePage() {
     setSavedCards(savedCards.filter((c) => c.id !== id));
   };
 
+  const handleProfileImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      setImageUploadError("Please select a valid image file");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setImageUploadError("File size must be less than 5MB");
+      return;
+    }
+
+    setIsUploadingImage(true);
+    setImageUploadError("");
+
+    try {
+      // Create a FileReader to convert the file to base64
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const base64String = event.target?.result as string;
+        setProfileImage(base64String);
+        setIsUploadingImage(false);
+        // Optionally: Send to backend API here
+        // await updateProfileImage(base64String);
+      };
+      reader.onerror = () => {
+        setImageUploadError("Failed to read file");
+        setIsUploadingImage(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      setImageUploadError(err instanceof Error ? err.message : "Failed to upload image");
+      setIsUploadingImage(false);
+    }
+  };
+
+  const handleRemoveProfileImage = () => {
+    setProfileImage(null);
+    setImageUploadError("");
+  };
+
   return (
     <div className="min-h-screen relative flex flex-col">
       <div
@@ -183,10 +231,62 @@ export default function ProfilePage() {
 
           {/* Avatar + Name */}
           <div className="flex flex-col items-center pt-10 pb-6">
-            <div className="w-24 h-24 rounded-full border-4 border-purple-400 bg-purple-700 flex items-center justify-center mb-3 shadow-lg">
-              <span className="text-white text-3xl font-bold">{initials}</span>
+            <div className="relative group">
+              {profileImage ? (
+                <img
+                  src={profileImage}
+                  alt="Profile"
+                  className="w-24 h-24 rounded-full border-4 border-purple-400 object-cover shadow-lg"
+                />
+              ) : (
+                <div className="w-24 h-24 rounded-full border-4 border-purple-400 bg-purple-700 flex items-center justify-center shadow-lg">
+                  <span className="text-white text-3xl font-bold">{initials}</span>
+                </div>
+              )}
+              
+              {/* Hover overlay with change button */}
+              <div className="absolute inset-0 rounded-full bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <label htmlFor="profile-image-input" className="cursor-pointer flex flex-col items-center gap-1">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span className="text-white text-xs font-semibold">Change</span>
+                </label>
+                <input
+                  id="profile-image-input"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProfileImageChange}
+                  disabled={isUploadingImage}
+                  className="hidden"
+                />
+              </div>
+
+              {/* Loading indicator */}
+              {isUploadingImage && (
+                <div className="absolute inset-0 rounded-full bg-black/60 flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-purple-400 border-t-white rounded-full animate-spin" />
+                </div>
+              )}
             </div>
-            <h2 className="text-white text-xl font-bold">{userName || "User"}</h2>
+
+            {/* Error message */}
+            {imageUploadError && (
+              <p className="text-red-300 text-xs mt-3">{imageUploadError}</p>
+            )}
+
+            {/* Remove button - only show if image is uploaded */}
+            {profileImage && !isUploadingImage && (
+              <button
+                onClick={handleRemoveProfileImage}
+                className="mt-2 text-red-300 hover:text-red-200 text-xs transition-colors underline"
+              >
+                Remove Photo
+              </button>
+            )}
+
+            <h2 className="text-white text-xl font-bold mt-3">{userName || "User"}</h2>
             <p className="text-purple-200 text-sm mt-1">{userEmail}</p>
           </div>
 
